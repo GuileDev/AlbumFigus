@@ -1,5 +1,5 @@
-
 package graphic;
+
 import java.io.File;
 import java.awt.*;
 import java.awt.geom.Path2D;
@@ -16,10 +16,17 @@ public class Lobby extends JFrame {
     private final JButton btnFiguritas = new JButton("▢   FIGURITAS");
     private final JButton btnConfiguracion = new JButton("⚙   CONFIGURACIÓN");
     private final JButton btnSalir = new JButton("⇥   SALIR");
+    private final JLabel lblLogo = new JLabel();
 
     public Lobby() {
+        lblLogo.setHorizontalAlignment(SwingConstants.CENTER);
+        lblLogo.setIcon(new ImageIcon(
+                "src/ImagenesParaDiseño/Logo.png"
+        ));
+
+        panel.add(lblLogo);
         setTitle("Álbum de Figuritas - Fútbol");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(1100, 720);
         setMinimumSize(new Dimension(800, 600));
         setLocationRelativeTo(null);
@@ -39,18 +46,18 @@ public class Lobby extends JFrame {
 
         // EVENTO: botón ÁLBUM
         btnAlbum.addActionListener(e -> {
-         new Lobby2().setVisible(true);
-         this.setVisible(false);
+            new Lobby2().setVisible(true);
+    
         });
 
         // EVENTO: botón FIGURITAS
         btnFiguritas.addActionListener(e -> {
-  
+
         });
 
         // EVENTO: botón CONFIGURACIÓN
         btnConfiguracion.addActionListener(e -> {
-  new Configuracion().setVisible(true);
+            new Configuracion().setVisible(true);
         });
 
         // EVENTO: botón SALIR
@@ -78,24 +85,44 @@ public class Lobby extends JFrame {
         boton.setBorderPainted(false);
         boton.setFocusPainted(false);
         boton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
         boton.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-                boton.setBackground(amarillo);
-                boton.setForeground(oscuro);
-            }
 
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent e) {
-                boton.setBackground(principal
-                        ? amarillo : oscuro);
-                boton.setForeground(principal
-                        ? oscuro : Color.WHITE);
-            }
-        });
+    private int originalWidth;
+    private int originalHeight;
+    private int originalX;
+    private int originalY;
+
+    @Override
+    public void mouseEntered(java.awt.event.MouseEvent e) {
+        originalWidth = boton.getWidth();
+        originalHeight = boton.getHeight();
+        originalX = boton.getX();
+        originalY = boton.getY();
+
+        boton.setBackground(amarillo);
+        boton.setForeground(oscuro);
+
+        boton.setBounds(
+            originalX - 25,
+            originalY - 5,
+            originalWidth + 50,
+            originalHeight + 10
+        );
     }
 
+    @Override
+    public void mouseExited(java.awt.event.MouseEvent e) {
+        boton.setBackground(oscuro);
+boton.setForeground(amarillo);
+        boton.setBounds(
+            originalX,
+            originalY,
+            originalWidth,
+            originalHeight
+        );
+    }
+});
+    }
     private void acomodarBotones() {
         int ancho = panel.getWidth();
         int alto = panel.getHeight();
@@ -120,44 +147,59 @@ public class Lobby extends JFrame {
         btnSalir.setBounds(
                 x, y + 3 * (botonAlto + separacion),
                 botonAncho, botonAlto);
-    }
 
-private class LobbyPanel extends JPanel {
+        int logoAncho = Math.min(400, ancho - 40);
+        int logoAlto = 400;
 
-    private Image fondo;
-
-    LobbyPanel() {
-        setBackground(new Color(10, 20, 30));
-
-        // La carpeta ImagenesParaDiseño está junto a los paquetes.
-        File archivo = new File(
-            "src/ImagenesParaDiseño/lobbyBackground.png"
+        lblLogo.setBounds(
+                (ancho - logoAncho) / 2,
+                y - logoAlto - 10,
+                logoAncho,
+                logoAlto
         );
 
-        if (archivo.exists()) {
-            fondo = new ImageIcon(archivo.getPath()).getImage();
-        } else {
-            System.err.println(
-                "No se encontró la imagen: "
-                + archivo.getAbsolutePath()
-            );
-        }
     }
 
-    @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
+    private class LobbyPanel extends JPanel {
 
-        if (fondo != null) {
-            g.drawImage(
-                fondo,
-                0, 0,
-                getWidth(), getHeight(),
-                this
+        private Image fondo;
+        private Image icono;
+
+        LobbyPanel() {
+            setBackground(new Color(10, 20, 30));
+
+            File ellogo = new File(
+                    "src/ImagenesParaDiseño/Logo.png"
             );
+
+            File archivo = new File(
+                    "src/ImagenesParaDiseño/lobbyBackground.png"
+            );
+
+            if (archivo.exists() && ellogo.exists()) {
+                icono = new ImageIcon(ellogo.getPath()).getImage();
+                fondo = new ImageIcon(archivo.getPath()).getImage();
+            } else {
+                System.err.println(
+                        "no esta la img: "
+                );
+            }
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+
+            if (fondo != null) {
+                g.drawImage(
+                        fondo,
+                        0, 0,
+                        getWidth(), getHeight(),
+                        this
+                );
+            }
         }
     }
-}
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {

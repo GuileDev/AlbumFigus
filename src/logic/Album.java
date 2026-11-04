@@ -1,5 +1,6 @@
 package logic;
 
+import Persistencia.Conexion;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -9,12 +10,12 @@ import java.util.Random;
 
 public class Album {
     
-    private Usuario usuarioActual;
+    private UsuarioActual usuarioActual;
     private ArrayList<Figurita> figuritasDisponibles;
     private Random random;
     private Conexion conexion;
     
-    public Album(Usuario usuario) {
+    public Album(UsuarioActual usuario) {
         this.usuarioActual = usuario;
         this.figuritasDisponibles = new ArrayList<>();
         this.random = new Random();
@@ -269,7 +270,7 @@ public class Album {
         cargarFiguritas();
     }
     
-    public Usuario getUsuarioActual() {
+    public UsuarioActual getUsuarioActual() {
         return usuarioActual;
     }
     
@@ -277,7 +278,7 @@ public class Album {
         return figuritasDisponibles;
     }
     
-    public void setUsuarioActual(Usuario usuarioActual) {
+    public void setUsuarioActual(UsuarioActual usuarioActual) {
         this.usuarioActual = usuarioActual;
     }
 }

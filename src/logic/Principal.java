@@ -1,5 +1,7 @@
 package logic;
-
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import graphic.Lobby;
 import graphic.Lobby2;
 import java.awt.EventQueue;
@@ -11,7 +13,12 @@ public class Principal {
             new Lobby().setVisible(true);
             new Lobby().setResizable(false);
             new Lobby2().setResizable(false);
+            
         });
+        
+        
+        
+        
     }
     
 }

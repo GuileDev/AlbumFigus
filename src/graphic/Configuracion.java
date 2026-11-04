@@ -3,7 +3,8 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package graphic;
-
+import javax.swing.JFrame;
+import java.awt.Color;
 /**
  *
  * @author gerrz
@@ -17,6 +18,8 @@ public class Configuracion extends javax.swing.JFrame {
      */
     public Configuracion() {
         initComponents();
+        // Inicializa el estado del interruptor según la preferencia guardada
+        checkboxoscuro.setSelected(Preferencias.modoOscuro);
     }
 
     /**
@@ -30,18 +33,18 @@ public class Configuracion extends javax.swing.JFrame {
 
         buttonGroup1 = new javax.swing.ButtonGroup();
         jLabel1 = new javax.swing.JLabel();
-        jRadioButton1 = new javax.swing.JRadioButton();
+        checkboxoscuro = new javax.swing.JRadioButton();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         jRadioButton2 = new javax.swing.JRadioButton();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         jLabel1.setFont(new java.awt.Font("Fredoka Condensed", 0, 48)); // NOI18N
         jLabel1.setText("Configuraciòn");
 
-        jRadioButton1.setIconTextGap(32);
-        jRadioButton1.addActionListener(this::jRadioButton1ActionPerformed);
+        checkboxoscuro.setIconTextGap(32);
+        checkboxoscuro.addActionListener(this::checkboxoscuroActionPerformed);
 
         jLabel2.setFont(new java.awt.Font("Fredoka Condensed", 0, 24)); // NOI18N
         jLabel2.setText("Modo oscuro");
@@ -71,7 +74,7 @@ public class Configuracion extends javax.swing.JFrame {
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jLabel2)
                                 .addGap(74, 74, 74)
-                                .addComponent(jRadioButton1)))))
+                                .addComponent(checkboxoscuro)))))
                 .addContainerGap(100, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -82,24 +85,28 @@ public class Configuracion extends javax.swing.JFrame {
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jLabel2)
-                    .addComponent(jRadioButton1))
+                    .addComponent(checkboxoscuro))
                 .addGap(8, 8, 8)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(28, 28, 28)
                         .addComponent(jRadioButton2))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(18, 18, 18)
-                        .addComponent(jLabel3)))
-                .addContainerGap(134, Short.MAX_VALUE))
+                    .addComponent(jLabel3))
+                .addContainerGap(135, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRadioButton1ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jRadioButton1ActionPerformed
+    private void checkboxoscuroActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkboxoscuroActionPerformed
+        boolean seleccionado = checkboxoscuro.isSelected();
+                Preferencias.modoOscuro = seleccionado;
+        
+        Lobby2 lobby2 = Lobby2.getInstancia();
+        if (lobby2 != null) {
+            lobby2.aplicarModoOscuro(seleccionado);
+        }
+    }//GEN-LAST:event_checkboxoscuroActionPerformed
 
     private void jRadioButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRadioButton2ActionPerformed
         // TODO add your handling code here:
@@ -132,10 +139,10 @@ public class Configuracion extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
+    private javax.swing.JRadioButton checkboxoscuro;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JRadioButton jRadioButton1;
     private javax.swing.JRadioButton jRadioButton2;
     // End of variables declaration//GEN-END:variables
 }

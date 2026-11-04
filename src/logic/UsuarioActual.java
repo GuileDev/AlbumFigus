@@ -1,14 +1,14 @@
 package logic;
 
-public class Usuario {
+public class UsuarioActual {
     private int idUsuario;
     private String username;
     private int monedas;
 
-    public Usuario() {
+    public UsuarioActual() {
     }
 
-    public Usuario(int idUsuario, String username, int monedas) {
+    public UsuarioActual(int idUsuario, String username, int monedas) {
         this.idUsuario = idUsuario;
         this.username = username;
         this.monedas = monedas;

@@ -6,6 +6,8 @@ package graphic;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -24,20 +26,25 @@ import javax.swing.Timer;
 import javax.swing.WindowConstants;
 
 public class Lobby2 extends JFrame {
-    
+
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Lobby2.class.getName());
-    
+
     private JTabbedPane jTabbedPane1;
     private JPanel panelPagina1;
     private JPanel panelPagina2;
     private JPanel panelPagina3;
     private SlotPanel slotSeleccionado;
 
+    /** Última ventana Lobby2 abierta (para aplicarle el modo oscuro en caliente). */
+    private static Lobby2 instancia;
+
     /**
      * Creates new form Lobby2
      */
     public Lobby2() {
         initComponents();
+        instancia = this;
+        aplicarModoOscuro(Preferencias.modoOscuro);
     }
 
     /**
@@ -54,7 +61,7 @@ public class Lobby2 extends JFrame {
         panelPagina2 = new JPanel();
         panelPagina3 = new JPanel();
 
-        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Álbum de Figuritas");
         setMinimumSize(new Dimension(950, 700));
         setResizable(true);
@@ -62,11 +69,11 @@ public class Lobby2 extends JFrame {
         panelPagina1.setBackground(new Color(245, 245, 245));
         panelPagina1.setLayout(new GridLayout(4, 3, 20, 20));
         panelPagina1.setBorder(BorderFactory.createEmptyBorder(25, 40, 25, 40));
-        
+
         for (int i = 1; i <= 12; i++) {
             panelPagina1.add(new SlotPanel(i));
         }
-        
+
         JScrollPane scrollPagina1 = new JScrollPane(panelPagina1);
         scrollPagina1.setBorder(null);
         scrollPagina1.getVerticalScrollBar().setUnitIncrement(16);
@@ -76,11 +83,11 @@ public class Lobby2 extends JFrame {
         panelPagina2.setBackground(new Color(245, 245, 245));
         panelPagina2.setLayout(new GridLayout(4, 3, 20, 20));
         panelPagina2.setBorder(BorderFactory.createEmptyBorder(25, 40, 25, 40));
-        
+
         for (int i = 13; i <= 24; i++) {
             panelPagina2.add(new SlotPanel(i));
         }
-        
+
         JScrollPane scrollPagina2 = new JScrollPane(panelPagina2);
         scrollPagina2.setBorder(null);
         scrollPagina2.getVerticalScrollBar().setUnitIncrement(16);
@@ -90,11 +97,11 @@ public class Lobby2 extends JFrame {
         panelPagina3.setBackground(new Color(245, 245, 245));
         panelPagina3.setLayout(new GridLayout(4, 3, 20, 20));
         panelPagina3.setBorder(BorderFactory.createEmptyBorder(25, 40, 25, 40));
-        
+
         for (int i = 25; i <= 36; i++) {
             panelPagina3.add(new SlotPanel(i));
         }
-        
+
         JScrollPane scrollPagina3 = new JScrollPane(panelPagina3);
         scrollPagina3.setBorder(null);
         scrollPagina3.getVerticalScrollBar().setUnitIncrement(16);
@@ -107,7 +114,44 @@ public class Lobby2 extends JFrame {
         pack();
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
-    
+
+    /**
+     * Activa o desactiva el modo oscuro en toda esta ventana.
+     * @param oscuro true para fondo oscuro, false para fondo claro.
+     */
+    public void aplicarModoOscuro(boolean oscuro) {
+        Color fondo = oscuro ? new Color(35, 35, 35) : new Color(245, 245, 245);
+        Color texto = oscuro ? Color.WHITE : Color.BLACK;
+        Color textoClaro = oscuro ? new Color(170, 170, 170) : new Color(120, 120, 120);
+
+        getContentPane().setBackground(fondo);
+        panelPagina1.setBackground(fondo);
+        panelPagina2.setBackground(fondo);
+        panelPagina3.setBackground(fondo);
+
+        aplicarModoOscuroAPanel(panelPagina1, oscuro, texto, textoClaro);
+        aplicarModoOscuroAPanel(panelPagina2, oscuro, texto, textoClaro);
+        aplicarModoOscuroAPanel(panelPagina3, oscuro, texto, textoClaro);
+
+        revalidate();
+        repaint();
+    }
+
+    private void aplicarModoOscuroAPanel(Container contenedor, boolean oscuro, Color texto, Color textoClaro) {
+        for (Component comp : contenedor.getComponents()) {
+            if (comp instanceof SlotPanel slot) {
+                slot.setModoOscuro(oscuro, texto, textoClaro);
+            } else if (comp instanceof Container sub) {
+                sub.setBackground(oscuro ? new Color(35, 35, 35) : new Color(245, 245, 245));
+                aplicarModoOscuroAPanel(sub, oscuro, texto, textoClaro);
+            }
+        }
+    }
+
+    public static Lobby2 getInstancia() {
+        return instancia;
+    }
+
     private class SlotPanel extends JPanel {
         private int numero;
         private boolean hover;
@@ -120,14 +164,13 @@ public class Lobby2 extends JFrame {
         private Timer clickTimer;
         private JLabel numLabel;
         private JLabel vacioLabel;
-        private Color colorPastel;
-        private Color colorPastelClaro;
+
         private static final int TAMAÑO_NORMAL_WIDTH = 210;
         private static final int TAMAÑO_NORMAL_HEIGHT = 290;
         private static final int TAMAÑO_EXPANDIDO_WIDTH = 240;
         private static final int TAMAÑO_EXPANDIDO_HEIGHT = 330;
         private static final int PASO_ANIMACION = 6;
-        
+
         public SlotPanel(int numero) {
             this.numero = numero;
             this.hover = false;
@@ -136,36 +179,44 @@ public class Lobby2 extends JFrame {
             this.animacionHeight = TAMAÑO_NORMAL_HEIGHT;
             this.animacionX = 0;
             this.animacionY = 0;
-            generarColorPastel();
+
             initSlot();
             initAnimaciones();
         }
-        
-        private void generarColorPastel() {
-            java.util.Random random = new java.util.Random(numero * 131542391L);
-            int r = 180 + random.nextInt(60);
-            int g = 180 + random.nextInt(60);
-            int b = 180 + random.nextInt(60);
-            colorPastel = new Color(r, g, b);
-            colorPastelClaro = new Color(Math.min(255, r + 40), Math.min(255, g + 40), Math.min(255, b + 40));
+
+
+        /**
+         * Aplica el aspecto oscuro o claro a esta casilla del álbum.
+         */
+        public void setModoOscuro(boolean oscuro, Color texto, Color textoClaro) {
+            if (oscuro) {
+                setBackground(new Color(50, 50, 50));
+                setBorder(BorderFactory.createLineBorder(new Color(90, 90, 90), 2));
+            } else {
+                  setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+            }
+            numLabel.setForeground(texto);
+            vacioLabel.setForeground(textoClaro);
+            revalidate();
+            repaint();
         }
-        
+
         private void initSlot() {
             setPreferredSize(new Dimension(TAMAÑO_NORMAL_WIDTH, TAMAÑO_NORMAL_HEIGHT));
             setMaximumSize(new Dimension(TAMAÑO_EXPANDIDO_WIDTH, TAMAÑO_EXPANDIDO_HEIGHT));
             setMinimumSize(new Dimension(TAMAÑO_NORMAL_WIDTH, TAMAÑO_NORMAL_HEIGHT));
-            setBackground(colorPastelClaro);
+
             setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
             setLayout(null);
             setCursor(new Cursor(Cursor.HAND_CURSOR));
-            
+
             numLabel = new JLabel("#" + numero);
             numLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
             numLabel.setHorizontalAlignment(SwingConstants.CENTER);
             numLabel.setForeground(Color.BLACK);
             numLabel.setBounds(0, 8, TAMAÑO_NORMAL_WIDTH, 25);
             add(numLabel);
-            
+
             vacioLabel = new JLabel("SIN FIGURITA");
             vacioLabel.setFont(new Font("Segoe UI", Font.BOLD, 11));
             vacioLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -173,7 +224,7 @@ public class Lobby2 extends JFrame {
             vacioLabel.setBounds(0, 130, TAMAÑO_NORMAL_WIDTH, 25);
             add(vacioLabel);
         }
-        
+
         private void initAnimaciones() {
             hoverTimer = new Timer(12, e -> {
                 if (hover && !seleccionado) {
@@ -194,7 +245,7 @@ public class Lobby2 extends JFrame {
                     }
                 }
             });
-            
+
             clickTimer = new Timer(10, e -> {
                 if (seleccionado) {
                     if (animacionWidth < TAMAÑO_EXPANDIDO_WIDTH + 10 || animacionHeight < TAMAÑO_EXPANDIDO_HEIGHT + 10) {
@@ -205,7 +256,7 @@ public class Lobby2 extends JFrame {
                         clickTimer.stop();
                     }
                 } else {
-                    if (animacionWidth > (hover ? TAMAÑO_EXPANDIDO_WIDTH : TAMAÑO_NORMAL_WIDTH) || 
+                    if (animacionWidth > (hover ? TAMAÑO_EXPANDIDO_WIDTH : TAMAÑO_NORMAL_WIDTH) ||
                         animacionHeight > (hover ? TAMAÑO_EXPANDIDO_HEIGHT : TAMAÑO_NORMAL_HEIGHT)) {
                         int targetW = hover ? TAMAÑO_EXPANDIDO_WIDTH : TAMAÑO_NORMAL_WIDTH;
                         int targetH = hover ? TAMAÑO_EXPANDIDO_HEIGHT : TAMAÑO_NORMAL_HEIGHT;
@@ -217,35 +268,35 @@ public class Lobby2 extends JFrame {
                     }
                 }
             });
-            
+
             addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseEntered(MouseEvent e) {
                     hover = true;
                     if (!seleccionado) {
                         setBorder(BorderFactory.createLineBorder(Color.BLACK, 3));
-                        setBackground(colorPastel);
+
                         hoverTimer.start();
                     }
                 }
-                
+
                 @Override
                 public void mouseExited(MouseEvent e) {
                     hover = false;
                     if (!seleccionado) {
                         setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
-                        setBackground(colorPastelClaro);
+
                         hoverTimer.start();
                     }
                 }
-                
+
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     if (seleccionado) {
                         seleccionado = false;
                         setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
                         slotSeleccionado = null;
-                        setBackground(colorPastelClaro);
+
                         clickTimer.start();
                     } else {
                         if (slotSeleccionado != null && slotSeleccionado != SlotPanel.this) {
@@ -254,21 +305,21 @@ public class Lobby2 extends JFrame {
                         seleccionado = true;
                         slotSeleccionado = SlotPanel.this;
                         setBorder(BorderFactory.createLineBorder(Color.BLACK, 4));
-                        setBackground(colorPastel);
+
                         clickTimer.start();
                     }
                 }
             });
         }
-        
+
         private void deseleccionar() {
             seleccionado = false;
             hover = false;
             setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
-            setBackground(colorPastelClaro);
+
             clickTimer.start();
         }
-        
+
         private void actualizarAnimacion() {
             setPreferredSize(new Dimension(animacionWidth, animacionHeight));
             if (numLabel != null) {
