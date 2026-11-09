@@ -5,13 +5,14 @@
 package graphic;
 import java.util.HashSet;
 import java.util.Set;
-import logic.UsuarioActual;
+import Persistencia.Usuario;
 /**
  *
  * @author gerrz
  */
+
 public class login extends javax.swing.JFrame {
-    
+private Usuario usuarioActual;    
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(login.class.getName());
 
     /**
@@ -39,7 +40,7 @@ public class login extends javax.swing.JFrame {
         setBackground(new java.awt.Color(204, 204, 204));
 
         jLabel1.setFont(new java.awt.Font("Fredoka SemiCondensed", 0, 48)); // NOI18N
-        jLabel1.setText("Inicio de sesion");
+        jLabel1.setText("Inicio de sesión");
 
         usuariotxt.setText("Ing Usuario");
         usuariotxt.addActionListener(this::usuariotxtActionPerformed);
@@ -93,10 +94,32 @@ public class login extends javax.swing.JFrame {
     }//GEN-LAST:event_contraseñatxtActionPerformed
 
     private void IniciaSesionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_IniciaSesionActionPerformed
-        String user = usuariotxt.getText();
-        String contra = contraseñatxt.getText();
-        UsuarioActual user2 = new UsuarioActual();
-        user2.setUsername(user);
+ String user = usuariotxt.getText();
+    String contra = contraseñatxt.getText();
+
+    try {
+        usuarioActual = new Usuario();
+
+        if (usuarioActual.IniciarSesion(user, contra)) {
+
+            int monedas = usuarioActual.getMonedasActuales();
+
+            System.out.println("Bienvenido: " + usuarioActual.getUsuarioActual());
+            System.out.println("Monedas: " + monedas);
+
+            // Acá podés abrir tu lobby
+
+        } else {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Contraseña incorrecta."
+            );
+        }
+
+    } catch (Exception ex) {
+        System.err.println("Error al iniciar sesión: " + ex.getMessage());
+    }
+        
     }//GEN-LAST:event_IniciaSesionActionPerformed
 
     /**

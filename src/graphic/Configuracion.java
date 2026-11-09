@@ -102,10 +102,6 @@ public class Configuracion extends javax.swing.JFrame {
         boolean seleccionado = checkboxoscuro.isSelected();
                 Preferencias.modoOscuro = seleccionado;
         
-        Lobby2 lobby2 = Lobby2.getInstancia();
-        if (lobby2 != null) {
-            lobby2.aplicarModoOscuro(seleccionado);
-        }
     }//GEN-LAST:event_checkboxoscuroActionPerformed
 
     private void jRadioButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRadioButton2ActionPerformed
