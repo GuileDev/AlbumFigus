@@ -3,9 +3,16 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/home/gerrz/NetBeansProjects/AlbumFigus/AlbumFigus/src/graphic/Lobby.java</file>
-            <file>file:/home/gerrz/NetBeansProjects/AlbumFigus/AlbumFigus/src/graphic/Login.java</file>
-            <file>file:/home/gerrz/NetBeansProjects/AlbumFigus/AlbumFigus/src/graphic/login.java</file>
+            <file>file:/C:/Users/Test/Documents/GitHub/AlbumFigus/src/Persistencia/Usuario.java</file>
+            <file>file:/C:/Users/Test/Documents/GitHub/AlbumFigus/src/graphic/Lobby.java</file>
+            <file>file:/C:/Users/Test/Documents/GitHub/AlbumFigus/src/Persistencia/Conexion.java</file>
+            <file>file:/C:/Users/Test/Documents/GitHub/AlbumFigus/src/graphic/Preferencias.java</file>
+            <file>file:/C:/Users/Test/Documents/GitHub/AlbumFigus/src/graphic/Configuracion.java</file>
+            <file>file:/C:/Users/Test/Documents/GitHub/AlbumFigus/src/graphic/Index.java</file>
+            <file>file:/C:/Users/Test/Documents/GitHub/AlbumFigus/src/logic/Album.java</file>
+            <file>file:/C:/Users/Test/Documents/GitHub/AlbumFigus/src/graphic/login.java</file>
+            <file>file:/C:/Users/Test/Documents/GitHub/AlbumFigus/src/logic/Packs.java</file>
+            <file>file:/C:/Users/Test/Documents/GitHub/AlbumFigus/src/logic/Sobres.java</file>
         </group>
     </open-files>
 </project-private>

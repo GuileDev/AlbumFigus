@@ -12,6 +12,7 @@ import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -22,21 +23,24 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.WindowConstants;
+import logic.Album;
+import logic.Figurita;
 
 public class Index extends JFrame {
 
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Index.class.getName());
 
     private JTabbedPane jTabbedPane1;
-    private JPanel panelPagina1;
-    private JPanel panelPagina2;
-    private JPanel panelPagina3;
     private SlotPanel slotSeleccionado;
+    private Album album;
+    private final boolean oscuro;
 
     /**
      * Creates new form Lobby2
      */
-    public Index() {
+    public Index(Album album) {
+        this.album = album;
+        this.oscuro = Preferencias.modoOscuro;
         initComponents();
     }
 
@@ -50,58 +54,59 @@ public class Index extends JFrame {
     private void initComponents() {
 
         jTabbedPane1 = new JTabbedPane();
-        panelPagina1 = new JPanel();
-        panelPagina2 = new JPanel();
-        panelPagina3 = new JPanel();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Álbum de Figuritas");
         setMinimumSize(new Dimension(950, 700));
         setResizable(true);
 
-        panelPagina1.setBackground(new Color(245, 245, 245));
-        panelPagina1.setLayout(new GridLayout(4, 3, 20, 20));
-        panelPagina1.setBorder(BorderFactory.createEmptyBorder(25, 40, 25, 40));
+        Color fondoPanel = oscuro ? new Color(30, 30, 36) : new Color(245, 245, 245);
+        Color fondoTab = oscuro ? new Color(38, 38, 46) : new Color(245, 245, 245);
 
-        for (int i = 1; i <= 12; i++) {
-            panelPagina1.add(new SlotPanel(i));
+        // Separar las figuritas por rareza, una pestaña para cada una
+        ArrayList<String> rarezas = new ArrayList<>();
+
+        if (album != null) {
+            for (Figurita f : album.catalogo) {
+                if (!rarezas.contains(f.getRareza())) {
+                    rarezas.add(f.getRareza());
+                }
+            }
+
+            for (String rareza : rarezas) {
+                JPanel panelPagina = new JPanel();
+                panelPagina.setBackground(fondoPanel);
+                panelPagina.setLayout(new GridLayout(0, 3, 20, 20));
+                panelPagina.setBorder(BorderFactory.createEmptyBorder(25, 40, 25, 40));
+
+                // Cada jugador va en su posicion precisa y permanente (ordenado por numero)
+                for (Figurita f : album.catalogo) {
+                    if (f.getRareza().equals(rareza)) {
+                        int cantidad = 0;
+                        for (int id : album.figuritas) {
+                            if (id == f.getIdFigurita()) {
+                                cantidad++;
+                            }
+                        }
+                        panelPagina.add(new SlotPanel(f, cantidad));
+                    }
+                }
+
+                JScrollPane scrollPagina = new JScrollPane(panelPagina);
+                scrollPagina.setBorder(null);
+                scrollPagina.getViewport().setBackground(fondoPanel);
+                scrollPagina.getVerticalScrollBar().setUnitIncrement(16);
+                scrollPagina.getHorizontalScrollBar().setUnitIncrement(16);
+                jTabbedPane1.addTab(rareza, scrollPagina);
+            }
         }
 
-        JScrollPane scrollPagina1 = new JScrollPane(panelPagina1);
-        scrollPagina1.setBorder(null);
-        scrollPagina1.getVerticalScrollBar().setUnitIncrement(16);
-        scrollPagina1.getHorizontalScrollBar().setUnitIncrement(16);
-        jTabbedPane1.addTab("Página 1 - Grupo A", scrollPagina1);
-
-        panelPagina2.setBackground(new Color(245, 245, 245));
-        panelPagina2.setLayout(new GridLayout(4, 3, 20, 20));
-        panelPagina2.setBorder(BorderFactory.createEmptyBorder(25, 40, 25, 40));
-
-        for (int i = 13; i <= 24; i++) {
-            panelPagina2.add(new SlotPanel(i));
-        }
-
-        JScrollPane scrollPagina2 = new JScrollPane(panelPagina2);
-        scrollPagina2.setBorder(null);
-        scrollPagina2.getVerticalScrollBar().setUnitIncrement(16);
-        scrollPagina2.getHorizontalScrollBar().setUnitIncrement(16);
-        jTabbedPane1.addTab("Página 2 - Grupo B", scrollPagina2);
-
-        panelPagina3.setBackground(new Color(245, 245, 245));
-        panelPagina3.setLayout(new GridLayout(4, 3, 20, 20));
-        panelPagina3.setBorder(BorderFactory.createEmptyBorder(25, 40, 25, 40));
-
-        for (int i = 25; i <= 36; i++) {
-            panelPagina3.add(new SlotPanel(i));
-        }
-
-        JScrollPane scrollPagina3 = new JScrollPane(panelPagina3);
-        scrollPagina3.setBorder(null);
-        scrollPagina3.getVerticalScrollBar().setUnitIncrement(16);
-        scrollPagina3.getHorizontalScrollBar().setUnitIncrement(16);
-        jTabbedPane1.addTab("Página 3 - Grupo C", scrollPagina3);
+        jTabbedPane1.setBackground(fondoTab);
+        jTabbedPane1.setForeground(oscuro ? new Color(235, 235, 235) : Color.BLACK);
+        jTabbedPane1.setFont(new Font("Segoe UI", Font.BOLD, 14));
 
         getContentPane().setLayout(new BorderLayout());
+        getContentPane().setBackground(fondoPanel);
         getContentPane().add(jTabbedPane1, BorderLayout.CENTER);
 
         pack();
@@ -109,7 +114,10 @@ public class Index extends JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private class SlotPanel extends JPanel {
-        private int numero;
+
+        private Figurita figurita;
+        private boolean tieneFigurita;
+        private int cantidad;
         private boolean hover;
         private boolean seleccionado;
         private int animacionWidth;
@@ -119,17 +127,26 @@ public class Index extends JFrame {
         private Timer hoverTimer;
         private Timer clickTimer;
         private JLabel numLabel;
+        private JLabel cantidadLabel;
+        private JLabel jugadorLabel;
+        private JLabel posicionLabel;
         private JLabel vacioLabel;
         private Color colorPastel;
         private Color colorPastelClaro;
+        private Color colorTexto;
+        private Color colorTextoSuave;
+        private Color colorBorde;
         private static final int TAMAÑO_NORMAL_WIDTH = 210;
         private static final int TAMAÑO_NORMAL_HEIGHT = 290;
         private static final int TAMAÑO_EXPANDIDO_WIDTH = 240;
         private static final int TAMAÑO_EXPANDIDO_HEIGHT = 330;
         private static final int PASO_ANIMACION = 6;
 
-        public SlotPanel(int numero) {
-            this.numero = numero;
+        public SlotPanel(Figurita figurita, int cantidad) {
+
+            this.figurita = figurita;
+            this.cantidad = cantidad;
+            this.tieneFigurita = cantidad > 0;
             this.hover = false;
             this.seleccionado = false;
             this.animacionWidth = TAMAÑO_NORMAL_WIDTH;
@@ -142,12 +159,43 @@ public class Index extends JFrame {
         }
 
         private void generarColorPastel() {
+            int numero = figurita != null ? figurita.getNumero() : 0;
             java.util.Random random = new java.util.Random(numero * 131542391L);
             int r = 180 + random.nextInt(60);
             int g = 180 + random.nextInt(60);
             int b = 180 + random.nextInt(60);
-            colorPastel = new Color(r, g, b);
-            colorPastelClaro = new Color(Math.min(255, r + 40), Math.min(255, g + 40), Math.min(255, b + 40));
+
+            if (oscuro) {
+                // Modo oscuro: propias bien brillantes, ajenas bien apagadas
+                colorPastel = new Color(96, 106, 150);
+                colorPastelClaro = new Color(74, 82, 122);
+                colorTexto = new Color(240, 240, 250);
+                colorTextoSuave = new Color(185, 190, 215);
+                colorBorde = new Color(150, 160, 210);
+            } else {
+                colorPastel = new Color(r, g, b);
+                colorPastelClaro = new Color(Math.min(255, r + 40), Math.min(255, g + 40), Math.min(255, b + 40));
+                colorTexto = Color.BLACK;
+                colorTextoSuave = new Color(120, 120, 120);
+                colorBorde = Color.BLACK;
+            }
+
+            // Sin la figurita, se ve apagada
+            if (!tieneFigurita) {
+                if (oscuro) {
+                    colorPastelClaro = new Color(32, 32, 38);
+                    colorPastel = new Color(42, 42, 50);
+                    colorTexto = new Color(120, 120, 130);
+                    colorTextoSuave = new Color(85, 85, 95);
+                    colorBorde = new Color(48, 48, 56);
+                } else {
+                    colorPastelClaro = new Color(215, 215, 215);
+                    colorPastel = new Color(228, 228, 228);
+                    colorTexto = new Color(140, 140, 140);
+                    colorTextoSuave = new Color(170, 170, 170);
+                    colorBorde = new Color(190, 190, 190);
+                }
+            }
         }
 
         private void initSlot() {
@@ -155,23 +203,53 @@ public class Index extends JFrame {
             setMaximumSize(new Dimension(TAMAÑO_EXPANDIDO_WIDTH, TAMAÑO_EXPANDIDO_HEIGHT));
             setMinimumSize(new Dimension(TAMAÑO_NORMAL_WIDTH, TAMAÑO_NORMAL_HEIGHT));
             setBackground(colorPastelClaro);
-            setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+            setBorder(BorderFactory.createLineBorder(colorBorde, 2));
             setLayout(null);
             setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-            numLabel = new JLabel("#" + numero);
+            String numeroTexto = figurita != null ? String.valueOf(figurita.getNumero()) : "?";
+            String jugador = figurita != null ? figurita.getJugador() : "???";
+            String posicion = figurita != null ? figurita.getPosicion() : "";
+            String seleccion = (figurita != null && figurita.getSeleccion() != null) ? figurita.getSeleccion().getNombre() : "";
+
+            numLabel = new JLabel("#" + numeroTexto);
             numLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
             numLabel.setHorizontalAlignment(SwingConstants.CENTER);
-            numLabel.setForeground(Color.BLACK);
+            numLabel.setForeground(colorTexto);
             numLabel.setBounds(0, 8, TAMAÑO_NORMAL_WIDTH, 25);
             add(numLabel);
 
-            vacioLabel = new JLabel("SIN FIGURITA");
-            vacioLabel.setFont(new Font("Segoe UI", Font.BOLD, 11));
-            vacioLabel.setHorizontalAlignment(SwingConstants.CENTER);
-            vacioLabel.setForeground(new Color(120, 120, 120));
-            vacioLabel.setBounds(0, 130, TAMAÑO_NORMAL_WIDTH, 25);
-            add(vacioLabel);
+            if (cantidad > 1) {
+                cantidadLabel = new JLabel("x" + cantidad);
+                cantidadLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
+                cantidadLabel.setHorizontalAlignment(SwingConstants.CENTER);
+                cantidadLabel.setForeground(colorTextoSuave);
+                cantidadLabel.setBounds(TAMAÑO_NORMAL_WIDTH - 48, 8, 44, 25);
+                add(cantidadLabel);
+            }
+
+            jugadorLabel = new JLabel(jugador);
+            jugadorLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+            jugadorLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            jugadorLabel.setForeground(colorTexto);
+            jugadorLabel.setBounds(0, 45, TAMAÑO_NORMAL_WIDTH, 55);
+            add(jugadorLabel);
+
+            posicionLabel = new JLabel(posicion + (seleccion.isEmpty() ? "" : " · " + seleccion));
+            posicionLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            posicionLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            posicionLabel.setForeground(colorTextoSuave);
+            posicionLabel.setBounds(0, 105, TAMAÑO_NORMAL_WIDTH, 22);
+            add(posicionLabel);
+
+            if (!tieneFigurita) {
+                vacioLabel = new JLabel("SIN FIGURITA");
+                vacioLabel.setFont(new Font("Segoe UI", Font.BOLD, 11));
+                vacioLabel.setHorizontalAlignment(SwingConstants.CENTER);
+                vacioLabel.setForeground(colorTextoSuave);
+                vacioLabel.setBounds(0, 160, TAMAÑO_NORMAL_WIDTH, 25);
+                add(vacioLabel);
+            }
         }
 
         private void initAnimaciones() {
@@ -223,7 +301,7 @@ public class Index extends JFrame {
                 public void mouseEntered(MouseEvent e) {
                     hover = true;
                     if (!seleccionado) {
-                        setBorder(BorderFactory.createLineBorder(Color.BLACK, 3));
+                        setBorder(BorderFactory.createLineBorder(colorBorde, 3));
                         setBackground(colorPastel);
                         hoverTimer.start();
                     }
@@ -233,7 +311,7 @@ public class Index extends JFrame {
                 public void mouseExited(MouseEvent e) {
                     hover = false;
                     if (!seleccionado) {
-                        setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+                        setBorder(BorderFactory.createLineBorder(colorBorde, 2));
                         setBackground(colorPastelClaro);
                         hoverTimer.start();
                     }
@@ -243,7 +321,7 @@ public class Index extends JFrame {
                 public void mouseClicked(MouseEvent e) {
                     if (seleccionado) {
                         seleccionado = false;
-                        setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+                        setBorder(BorderFactory.createLineBorder(colorBorde, 2));
                         slotSeleccionado = null;
                         setBackground(colorPastelClaro);
                         clickTimer.start();
@@ -253,7 +331,7 @@ public class Index extends JFrame {
                         }
                         seleccionado = true;
                         slotSeleccionado = SlotPanel.this;
-                        setBorder(BorderFactory.createLineBorder(Color.BLACK, 4));
+                        setBorder(BorderFactory.createLineBorder(colorBorde, 4));
                         setBackground(colorPastel);
                         clickTimer.start();
                     }
@@ -264,7 +342,7 @@ public class Index extends JFrame {
         private void deseleccionar() {
             seleccionado = false;
             hover = false;
-            setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+            setBorder(BorderFactory.createLineBorder(colorBorde, 2));
             setBackground(colorPastelClaro);
             clickTimer.start();
         }
@@ -275,8 +353,18 @@ public class Index extends JFrame {
                 numLabel.setBounds(0, 8, animacionWidth, 25);
                 numLabel.setFont(new Font("Segoe UI", Font.BOLD, seleccionado ? 18 : 16));
             }
+            if (cantidadLabel != null) {
+                cantidadLabel.setBounds(animacionWidth - 48, 8, 44, 25);
+            }
+            if (jugadorLabel != null) {
+                jugadorLabel.setBounds(0, 45, animacionWidth, 55);
+                jugadorLabel.setFont(new Font("Segoe UI", Font.BOLD, seleccionado ? 18 : 16));
+            }
+            if (posicionLabel != null) {
+                posicionLabel.setBounds(0, 105, animacionWidth, 22);
+            }
             if (vacioLabel != null) {
-                vacioLabel.setBounds(0, animacionHeight / 2 - 12, animacionWidth, 25);
+                vacioLabel.setBounds(0, animacionHeight / 2 + 25, animacionWidth, 25);
                 vacioLabel.setFont(new Font("Segoe UI", Font.BOLD, seleccionado ? 12 : 11));
             }
             revalidate();
@@ -288,6 +376,7 @@ public class Index extends JFrame {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
+
         /* Set the Nimbus look and feel */
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
@@ -301,6 +390,6 @@ public class Index extends JFrame {
         }
 
         /* Create and display the form */
-        SwingUtilities.invokeLater(() -> new Index().setVisible(true));
+        SwingUtilities.invokeLater(() -> new Index(null).setVisible(true));
     }
 }

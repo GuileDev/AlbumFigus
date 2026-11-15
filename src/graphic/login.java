@@ -6,6 +6,7 @@ package graphic;
 import java.util.HashSet;
 import java.util.Set;
 import Persistencia.Usuario;
+import logic.Album;
 /**
  *
  * @author gerrz
@@ -107,7 +108,11 @@ private Usuario usuarioActual;
             System.out.println("Bienvenido: " + usuarioActual.getUsuarioActual());
             System.out.println("Monedas: " + monedas);
 
-            // Acá podés abrir tu lobby
+            // Acá se abre el lobby, agarra los datos de la bd y los mete en el album
+            Album album = new Album(usuarioActual);
+
+            new Lobby(usuarioActual, album).setVisible(true);
+            dispose();
 
         } else {
             javax.swing.JOptionPane.showMessageDialog(

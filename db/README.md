@@ -2,11 +2,11 @@
 
 ## Requisitos
 
-- MySQL Server 8.0 o superior (probado con MySQL 26.10 en `localhost:3306`).
-- Driver JDBC: `mysql-connector-j-26.10.0.jar` (ya referenciado en
+- MySQL Server 8.0 o superior (probado con MySQL 8.0 en `localhost:3306`).
+- Driver JDBC: `mysql-connector-j-9.4.0.jar` (en `lib/`, referenciado en
   `nbproject/project.properties`).
 
-## Crear la base y el usuario
+## Crear la base y cargar los datos
 
 Con el servidor MySQL corriendo, desde la raíz del proyecto:
 
@@ -19,37 +19,29 @@ Crea:
 
 | Elemento | Valor |
 |---|---|
-| Base de datos | `albumfigus` (utf8mb4) |
-| Usuario MySQL | `albumfigus`@`localhost` |
-| Contraseña | `albumfigus2026` |
-| Permisos | `SELECT, INSERT, UPDATE, DELETE` sobre `albumfigus.*` |
+| Base de datos | `album` (utf8mb4) |
 
 Tablas: `usuario`, `seleccion`, `figurita`, `almacenamiento`.
-Además carga 6 selecciones y 36 figuritas de ejemplo (3 páginas de 12),
-y un usuario de prueba `demo` con id `1`.
+Además carga las 11 selecciones y las 32 figuritas (11 Común, 15 Estrella y 6 Especial).
+
+Desde Java, `Persistencia.Usuario` también crea la base y las tablas con
+`IF NOT EXISTS` al inicializarse, y seed de selecciones con `INSERT IGNORE`.
 
 ## Configuración desde Java
 
-`logic.Conexion` usa esos valores por defecto. Se pueden sobrescribir sin
-recompilar con propiedades del sistema:
+`Persistencia.Conexion` usa por defecto:
 
-```bash
-java -Dalbumfigus.db.url="jdbc:mysql://localhost:3306/albumfigus" \
-     -Dalbumfigus.db.usuario=albumfigus \
-     -Dalbumfigus.db.password=albumfigus2026 \
-     -cp ... logic.Principal
-```
-
-o con las variables de entorno `ALBUMFIGUS_DB_URL`,
-`ALBUMFIGUS_DB_USUARIO` y `ALBUMFIGUS_DB_PASSWORD`.
+| Elemento | Valor |
+|---|---|
+| Base de datos | `album` |
+| Puerto | `3306` |
+| Usuario | `root` |
+| Contraseña | `1234` |
 
 ## Probar la conexión
 
-Ejecutar `logic.ConnSimple` (Run File en NetBeans). Debe mostrar:
+Ejecutar `Persistencia.ConnSimple` (Run File en NetBeans). Debe mostrar:
 
 ```
 Conexión exitosa a la base de datos.
-Motor: MySQL 26.10.0
-Base de datos: albumfigus
-Figuritas cargadas: 36
 ```

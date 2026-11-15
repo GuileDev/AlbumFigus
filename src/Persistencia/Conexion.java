@@ -18,12 +18,12 @@ public class Conexion {
 
     // Constructor privado (Patrón Singleton)
     private Conexion() {
-        nomBaseDatos = "pruebas";
-        driver = "org.mariadb.jdbc.Driver";
+        nomBaseDatos = "album";
+        driver = "com.mysql.cj.jdbc.Driver";
         // Puerto configurado en 3306
-        url = "jdbc:mariadb://localhost:3306/" + nomBaseDatos + "?sslMode=trust";
-        usuario = "albumfigus";
-        password = "";
+        url = "jdbc:mysql://localhost:3306/" + nomBaseDatos + "?allowPublicKeyRetrieval=true";
+        usuario = "root";
+        password = "1234";
     }
 
     public static Conexion getInstancia() {

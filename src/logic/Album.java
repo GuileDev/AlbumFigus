@@ -1,26 +1,25 @@
 package logic;
 
 import Persistencia.Usuario;
-import Persistencia.Conexion;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Random;
 
 public class Album {
-    
+
     private Usuario usuarioActual;
- ArrayList<Integer> figuritas = new ArrayList<>();
+    public ArrayList<Integer> figuritas = new ArrayList<>();
+    public ArrayList<Figurita> catalogo = new ArrayList<>();
 
+    public Album(Usuario usuario) {
 
-public Album(Usuario usuario) {
+        this.usuarioActual = usuario;
 
-figuritas.add(1);
-    figuritas.add(5);
-    figuritas.add(1);
-    figuritas.add(8);
+        try {
+            // Cada vez que se abre el juego, agarra los datos de la bd y los mete en el album
+            this.figuritas = usuario.getFiguritasActuales();
+            this.catalogo = usuario.getFiguritasCatalogo();
+        } catch (Exception e) {
+            System.out.println("Error al cargar los datos del album: " + e.getMessage());
+        }
     }
-    
+
 }

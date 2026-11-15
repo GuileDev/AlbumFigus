@@ -4,20 +4,33 @@
  */
 package graphic;
 import java.awt.Color;
+import java.util.ArrayList;
+import logic.Album;
+import logic.Figurita;
+import logic.Sobres;
+import Persistencia.Usuario;
 /**
  *
  * @author gerrz
  */
 public class Lobby extends javax.swing.JFrame {
-    
+
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Lobby.class.getName());
+
+    private Usuario usuarioActual;
+    private Album album;
 
        Color colornormal = new Color(51,51,255);
     /**
      * Creates new form Lobby
      */
-    public Lobby() {
+    public Lobby(Usuario usuario, Album album) {
+        this.usuarioActual = usuario;
+        this.album = album;
         initComponents();
+
+        // Fuera de la region generada para que la regeneracion del .form no lo borre
+        sobresbtn.addActionListener(this::sobresbtnActionPerformed);
     }
 
     /**
@@ -35,6 +48,7 @@ public class Lobby extends javax.swing.JFrame {
         Salir = new javax.swing.JButton();
         Indexbtn = new javax.swing.JButton();
         jLabel3 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
@@ -52,6 +66,7 @@ public class Lobby extends javax.swing.JFrame {
                 configbtnMouseExited(evt);
             }
         });
+        configbtn.addActionListener(this::configbtnActionPerformed);
         getContentPane().add(configbtn, new org.netbeans.lib.awtextra.AbsoluteConstraints(356, 410, 190, -1));
 
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ImagenesParaDiseño/Logo.png"))); // NOI18N
@@ -59,7 +74,7 @@ public class Lobby extends javax.swing.JFrame {
 
         sobresbtn.setBackground(new java.awt.Color(0, 0, 255));
         sobresbtn.setFont(new java.awt.Font("Fredoka SemiCondensed", 1, 18)); // NOI18N
-        sobresbtn.setText("Abrir sobres");
+        sobresbtn.setText("Abrir un sobre");
         sobresbtn.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 sobresbtnMouseEntered(evt);
@@ -103,12 +118,15 @@ public class Lobby extends javax.swing.JFrame {
         jLabel3.setText("jLabel3");
         getContentPane().add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(-80, -40, 1000, 630));
 
+        jLabel2.setText("jLabel2");
+        getContentPane().add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 360, -1, -1));
+
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void IndexbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_IndexbtnActionPerformed
-        new Index().setVisible(true);
-        
+        new Index(album).setVisible(true);
+
     }//GEN-LAST:event_IndexbtnActionPerformed
 
     private void IndexbtnMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_IndexbtnMouseEntered
@@ -151,6 +169,36 @@ Salir.setForeground(Color.YELLOW);
     );
  
     }//GEN-LAST:event_SalirMouseEntered
+
+    private void sobresbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sobresbtnActionPerformed
+        try {
+            Sobres sobres = new Sobres();
+
+            ArrayList<Figurita> nuevas = sobres.abrirSobre(album, usuarioActual);
+
+            String mensaje = "Te salieron en el sobre:\n";
+
+            for (Figurita f : nuevas) {
+                mensaje += "#" + f.getNumero() + " - " + f.getJugador() + " (" + f.getRareza() + ")\n";
+            }
+
+            javax.swing.JOptionPane.showMessageDialog(
+                    this,
+                    mensaje,
+                    "Abrir sobres",
+                    javax.swing.JOptionPane.INFORMATION_MESSAGE
+            );
+
+        } catch (Exception ex) {
+            System.err.println("Error al abrir el sobre: " + ex.getMessage());
+            javax.swing.JOptionPane.showMessageDialog(
+                    this,
+                    "No se pudo abrir el sobre: " + ex.getMessage(),
+                    "Error",
+                    javax.swing.JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }//GEN-LAST:event_sobresbtnActionPerformed
 
     private void configbtnMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_configbtnMouseEntered
  
@@ -205,6 +253,10 @@ Salir.setForeground(Color.YELLOW);
     );
     }//GEN-LAST:event_SalirMouseExited
 
+    private void configbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_configbtnActionPerformed
+        new Configuracion().setVisible(true);
+    }//GEN-LAST:event_configbtnActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -227,7 +279,7 @@ Salir.setForeground(Color.YELLOW);
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new Lobby().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> new login().setVisible(true));
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -235,6 +287,7 @@ Salir.setForeground(Color.YELLOW);
     private javax.swing.JButton Salir;
     private javax.swing.JButton configbtn;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JButton sobresbtn;
     // End of variables declaration//GEN-END:variables
