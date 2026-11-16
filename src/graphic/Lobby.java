@@ -10,6 +10,7 @@ import logic.Fachada;
 import logic.Figurita;
 import logic.Sobres;
 import Persistencia.Usuario;
+ 
 /**
  *
  * @author gerrz
@@ -83,6 +84,7 @@ public class Lobby extends javax.swing.JFrame {
         sobresbtn = new javax.swing.JButton();
         Salir = new javax.swing.JButton();
         Indexbtn = new javax.swing.JButton();
+        repetidasbtn = new javax.swing.JButton();
         jLabel3 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
 
@@ -94,7 +96,7 @@ public class Lobby extends javax.swing.JFrame {
         monedastext.setFont(new java.awt.Font("Fredoka Condensed", 0, 36)); // NOI18N
         monedastext.setForeground(new java.awt.Color(255, 255, 51));
         monedastext.setText("Monedas: 0");
-        getContentPane().add(monedastext, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 476, 180, 60));
+        getContentPane().add(monedastext, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 476, 250, 60));
 
         configbtn.setBackground(new java.awt.Color(0, 0, 255));
         configbtn.setFont(new java.awt.Font("Fredoka SemiCondensed", 1, 18)); // NOI18N
@@ -154,10 +156,24 @@ public class Lobby extends javax.swing.JFrame {
         Indexbtn.addActionListener(this::IndexbtnActionPerformed);
         getContentPane().add(Indexbtn, new org.netbeans.lib.awtextra.AbsoluteConstraints(356, 330, 190, -1));
 
+        repetidasbtn.setBackground(new java.awt.Color(51, 51, 255));
+        repetidasbtn.setFont(new java.awt.Font("Fredoka SemiCondensed", 1, 18)); // NOI18N
+        repetidasbtn.setText("Mazo repetidas");
+        repetidasbtn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                repetidasbtnMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                repetidasbtnMouseExited(evt);
+            }
+        });
+        repetidasbtn.addActionListener(this::repetidasbtnActionPerformed);
+        getContentPane().add(repetidasbtn, new org.netbeans.lib.awtextra.AbsoluteConstraints(356, 490, 190, -1));
+
         jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ImagenesParaDiseño/lobbyBackground.png"))); // NOI18N
         jLabel3.setText("jLabel3");
-        getContentPane().add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(-80, -40, 1000, 630));
+        getContentPane().add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(-80, 0, 1000, 630));
 
         jLabel2.setText("jLabel2");
         getContentPane().add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 360, -1, -1));
@@ -193,6 +209,33 @@ public class Lobby extends javax.swing.JFrame {
         Indexbtn.getHeight() - 10
     );
     }//GEN-LAST:event_IndexbtnMouseExited
+
+    private void repetidasbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_repetidasbtnActionPerformed
+        new MazoRepetidas(album).setVisible(true);
+
+    }//GEN-LAST:event_repetidasbtnActionPerformed
+
+    private void repetidasbtnMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_repetidasbtnMouseEntered
+
+        repetidasbtn.setBackground(Color.BLACK);
+        repetidasbtn.setForeground(Color.YELLOW);
+
+        repetidasbtn.setSize(
+        repetidasbtn.getWidth() + 10,
+        repetidasbtn.getHeight() + 10
+    );
+
+    }//GEN-LAST:event_repetidasbtnMouseEntered
+
+    private void repetidasbtnMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_repetidasbtnMouseExited
+
+        repetidasbtn.setBackground(colornormal);
+        repetidasbtn.setForeground(Color.BLACK);
+        repetidasbtn.setSize(
+        repetidasbtn.getWidth() - 10,
+        repetidasbtn.getHeight() - 10
+    );
+    }//GEN-LAST:event_repetidasbtnMouseExited
 
     private void SalirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SalirActionPerformed
         fachada.cerrarSesionTiempo();
@@ -360,6 +403,7 @@ Salir.setForeground(Color.YELLOW);
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel monedastext;
+    private javax.swing.JButton repetidasbtn;
     private javax.swing.JButton sobresbtn;
     // End of variables declaration//GEN-END:variables
 }
