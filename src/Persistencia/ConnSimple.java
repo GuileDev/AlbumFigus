@@ -3,23 +3,29 @@ package Persistencia;
 import java.sql.Connection;
 
 /**
- * Clase principal para probar la conexión
+ * clase para probar la conexion a la base de datos.
+ *
+ * @author gerrz
  */
 public class ConnSimple {
 
-    public static void main(String[] args) {
+    /**
+     * prueba la conexion e imprime el resultado.
+     *
+     * @param argumentos argumentos de linea de comandos (no se usan)
+     */
+    public static void main(String[] argumentos) {
         try {
-            Conexion laconexion = Conexion.getInstancia();
-            Connection con = laconexion.getConnection();
+            Conexion laConexion = Conexion.getInstancia();
+            Connection conexionBD = laConexion.getConnection();
 
-            System.out.println("Conexión exitosa a la base de datos.");
+            System.out.println("conexion exitosa a la base de datos.");
 
-            // Buena práctica: cerrar la conexión tras finalizar
-            con.close();
+            conexionBD.close();
 
-        } catch (Exception e) {
-            System.out.println("No se pudo conectar a la base de datos.");
-            System.out.println("Error: " + e.getMessage());
+        } catch (Exception excepcion) {
+            System.out.println("no se pudo conectar a la base de datos.");
+            System.out.println("error: " + excepcion.getMessage());
         }
     }
 }

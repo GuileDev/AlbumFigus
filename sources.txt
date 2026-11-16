@@ -1,0 +1,16 @@
+C:\Users\gerrZ\Documents\GitHub\AlbumFigus\src\graphic\Configuracion.java
+C:\Users\gerrZ\Documents\GitHub\AlbumFigus\src\graphic\Index.java
+C:\Users\gerrZ\Documents\GitHub\AlbumFigus\src\graphic\Lobby.java
+C:\Users\gerrZ\Documents\GitHub\AlbumFigus\src\graphic\login.java
+C:\Users\gerrZ\Documents\GitHub\AlbumFigus\src\graphic\MazoRepetidas.java
+C:\Users\gerrZ\Documents\GitHub\AlbumFigus\src\graphic\Preferencias.java
+C:\Users\gerrZ\Documents\GitHub\AlbumFigus\src\logic\Album.java
+C:\Users\gerrZ\Documents\GitHub\AlbumFigus\src\logic\Fachada.java
+C:\Users\gerrZ\Documents\GitHub\AlbumFigus\src\logic\Figurita.java
+C:\Users\gerrZ\Documents\GitHub\AlbumFigus\src\logic\Packs.java
+C:\Users\gerrZ\Documents\GitHub\AlbumFigus\src\logic\Principal.java
+C:\Users\gerrZ\Documents\GitHub\AlbumFigus\src\logic\Seleccion.java
+C:\Users\gerrZ\Documents\GitHub\AlbumFigus\src\logic\Sobres.java
+C:\Users\gerrZ\Documents\GitHub\AlbumFigus\src\Persistencia\Conexion.java
+C:\Users\gerrZ\Documents\GitHub\AlbumFigus\src\Persistencia\ConnSimple.java
+C:\Users\gerrZ\Documents\GitHub\AlbumFigus\src\Persistencia\Usuario.java

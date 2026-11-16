@@ -1,31 +1,27 @@
 package Persistencia;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 
 /**
- * Clase encargada de gestionar la conexión con MariaDB
+ * gestiona la conexion con la base de datos (patron singleton).
+ *
+ * @author gerrz
  */
 public class Conexion {
     private static Conexion instancia;
 
-    // Atributos de configuración
-    private Connection con;
-    private String driver;
-    private String url;
-    private String usuario;
-    private String password;
-    private String nomBaseDatos;
-
-    // Constructor privado (Patrón Singleton)
+    /**
+     * constructor privado.
+     */
     private Conexion() {
-        nomBaseDatos = "album";
-        driver = "com.mysql.cj.jdbc.Driver";
-        // Puerto configurado en 3306
-        url = "jdbc:mysql://localhost:3306/" + nomBaseDatos + "?allowPublicKeyRetrieval=true";
-        usuario = "root";
-        password = "1234";
     }
 
+    /**
+     * devuelve la instancia unica.
+     *
+     * @return instancia de conexion
+     */
     public static Conexion getInstancia() {
         if (instancia == null) {
             instancia = new Conexion();
@@ -33,9 +29,14 @@ public class Conexion {
         return instancia;
     }
 
+    /**
+     * obtiene una conexion a la base de datos.
+     *
+     * @return conexion abierta
+     * @throws Exception si falla la carga del driver o la conexion
+     */
     public Connection getConnection() throws Exception {
-        Class.forName(driver); // Carga dinámica del driver
-        con = DriverManager.getConnection(url, usuario, password);
-        return con;
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        return DriverManager.getConnection("jdbc:mysql://localhost:3306/album?allowPublicKeyRetrieval=true", "root", "1234");
     }
 }

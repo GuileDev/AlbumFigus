@@ -10,27 +10,36 @@ import java.util.ArrayList;
 import logic.Figurita;
 import logic.Seleccion;
 
+/**
+ * maneja los datos del usuario y la base de datos.
+ *
+ * @author gerrz
+ */
 public class Usuario {
 
     private Conexion conexion = Conexion.getInstancia();
-    private int id;
-    private String username;
+    private int identificador;
+    private String nombreUsuario;
     private int monedas;
-    private int sesionActualId = -1;
+    private int idSesionActual = -1;
 
+    /**
+     * crea la base de datos y las tablas si no existen.
+     *
+     * @throws Exception si falla la conexion
+     */
     public Usuario() throws Exception {
 
-        // Crear la base de datos y las tablas si no existen
-        String serverUrl = "jdbc:mysql://localhost:3306/?allowPublicKeyRetrieval=true";
+        String direccionServidor = "jdbc:mysql://localhost:3306/?allowPublicKeyRetrieval=true";
 
-        try (Connection con = DriverManager.getConnection(serverUrl, "root", "1234")) {
+        try (Connection conexionBD = DriverManager.getConnection(direccionServidor, "root", "1234")) {
 
-            con.createStatement().execute("CREATE DATABASE IF NOT EXISTS album");
-            con.createStatement().execute("USE album");
+            conexionBD.createStatement().execute("CREATE DATABASE IF NOT EXISTS album");
+            conexionBD.createStatement().execute("USE album");
 
             String crearUsuario = "CREATE TABLE IF NOT EXISTS usuario (id INT PRIMARY KEY, username VARCHAR(50) NOT NULL UNIQUE, monedas INT NOT NULL, sobres_gratis INT NOT NULL DEFAULT 0)";
             String crearSeleccion = "CREATE TABLE IF NOT EXISTS seleccion (id INT PRIMARY KEY, nombre VARCHAR(50) NOT NULL, grupo CHAR(1) NOT NULL)";
-            String crearFigurita = "CREATE TABLE IF NOT EXISTS figurita (id INT PRIMARY KEY, numero INT NOT NULL, jugador VARCHAR(100) NOT NULL, posicion VARCHAR(30) NOT NULL, rareza VARCHAR(20) NOT NULL, id_seleccion INT NOT NULL, FOREIGN KEY (id_seleccion) REFERENCES seleccion(id))";
+            String crearFigurita = "CREATE TABLE IF NOT EXISTS figurita (id INT PRIMARY KEY, numero INT NOT NULL, jugador VARCHAR(100) NOT NULL, posicion VARCHAR(30) NOT NULL, rareza VARCHAR(20) NOT NULL, id_seleccion INT NOT NULL, imagen VARCHAR(100), FOREIGN KEY (id_seleccion) REFERENCES seleccion(id))";
             String crearAlmacenamiento = "CREATE TABLE IF NOT EXISTS almacenamiento (id_usuario INT NOT NULL, id_figurita INT NOT NULL, cantidad INT NOT NULL DEFAULT 0, PRIMARY KEY (id_usuario, id_figurita), FOREIGN KEY (id_usuario) REFERENCES usuario(id), FOREIGN KEY (id_figurita) REFERENCES figurita(id))";
             String crearCodigo = "CREATE TABLE IF NOT EXISTS codigo (codigo VARCHAR(50) PRIMARY KEY, recompensamonedas INT NOT NULL, recompensasobres INT NOT NULL)";
             String crearCanje = "CREATE TABLE IF NOT EXISTS canje (id_usuario INT NOT NULL, codigo VARCHAR(20) NOT NULL, fecha DATETIME NOT NULL, PRIMARY KEY (id_usuario, codigo), FOREIGN KEY (id_usuario) REFERENCES usuario(id), FOREIGN KEY (codigo) REFERENCES codigo(codigo))";
@@ -38,464 +47,570 @@ public class Usuario {
             String crearRevivir = "CREATE TABLE IF NOT EXISTS revivir (id INT PRIMARY KEY, id_usuario INT NOT NULL, consigna VARCHAR(100) NOT NULL, multiplicador INT NOT NULL, completado BOOLEAN NOT NULL, FOREIGN KEY (id_usuario) REFERENCES usuario(id))";
             String crearSesion = "CREATE TABLE IF NOT EXISTS sesion (id INT PRIMARY KEY, id_usuario INT NOT NULL, fecha_entrada DATETIME NOT NULL, fecha_salida DATETIME, ultima_recompensa DATETIME NOT NULL, FOREIGN KEY (id_usuario) REFERENCES usuario(id))";
 
-            con.createStatement().execute(crearUsuario);
-            con.createStatement().execute(crearSeleccion);
-            con.createStatement().execute(crearFigurita);
-            con.createStatement().execute(crearAlmacenamiento);
-            con.createStatement().execute(crearCodigo);
-            con.createStatement().execute(crearCanje);
-            con.createStatement().execute(crearConfiguracion);
-            con.createStatement().execute(crearRevivir);
-            con.createStatement().execute(crearSesion);
+            conexionBD.createStatement().execute(crearUsuario);
+            conexionBD.createStatement().execute(crearSeleccion);
+            conexionBD.createStatement().execute(crearFigurita);
+            conexionBD.createStatement().execute(crearAlmacenamiento);
+            conexionBD.createStatement().execute(crearCodigo);
+            conexionBD.createStatement().execute(crearCanje);
+            conexionBD.createStatement().execute(crearConfiguracion);
+            conexionBD.createStatement().execute(crearRevivir);
+            conexionBD.createStatement().execute(crearSesion);
             try {
-                con.createStatement().execute("ALTER TABLE usuario ADD COLUMN sobres_gratis INT NOT NULL DEFAULT 0");
-            } catch (SQLException ignore) {
+                conexionBD.createStatement().execute("ALTER TABLE usuario ADD COLUMN sobres_gratis INT NOT NULL DEFAULT 0");
+            } catch (SQLException excepcionIgnorada) {
+            }
+            try {
+                conexionBD.createStatement().execute("ALTER TABLE figurita ADD COLUMN imagen VARCHAR(100)");
+            } catch (SQLException excepcionIgnorada) {
             }
 
-            String seedSeleccion = "INSERT IGNORE INTO seleccion (id, nombre, grupo) VALUES (1, 'Uruguay', 'A'), (2, 'Brasil', 'B'), (3, 'Argentina', 'C'), (4, 'Francia', 'D'), (5, 'Belgica', 'E'), (6, 'Croacia', 'F'), (7, 'Inglaterra', 'G'), (8, 'Canada', 'H'), (9, 'Portugal', 'I'), (10, 'Espana', 'J'), (11, 'Paises Bajos', 'K')";
-            con.createStatement().execute(seedSeleccion);
+            String semillaSeleccion = "INSERT IGNORE INTO seleccion (id, nombre, grupo) VALUES (1, 'Uruguay', 'A'), (2, 'Brasil', 'B'), (3, 'Argentina', 'C'), (4, 'Francia', 'D'), (5, 'Belgica', 'E'), (6, 'Croacia', 'F'), (7, 'Inglaterra', 'G'), (8, 'Canada', 'H'), (9, 'Portugal', 'I'), (10, 'Espana', 'J'), (11, 'Paises Bajos', 'K')";
+            conexionBD.createStatement().execute(semillaSeleccion);
 
-            String seedFigurita = "INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (?, ?, ?, ?, ?, ?)";
+            String semillaFigurita = "INSERT INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion, imagen) VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE numero = VALUES(numero), jugador = VALUES(jugador), posicion = VALUES(posicion), rareza = VALUES(rareza), id_seleccion = VALUES(id_seleccion), imagen = VALUES(imagen)";
             String[][] catalogo = {
-                    {"1", "1", "Sergio Rochet", "Portero", "Común", "1"},
-                    {"2", "2", "Sebastian Caceres", "Defensa", "Común", "1"},
-                    {"3", "3", "Ronald Araujo", "Defensa", "Común", "1"},
-                    {"4", "4", "Jose Maria Gimenez", "Defensa", "Común", "1"},
-                    {"5", "5", "Manuel Ugarte", "Mediocampista", "Común", "1"},
-                    {"6", "6", "Federico Valverde", "Mediocampista", "Común", "1"},
-                    {"7", "7", "Rodrigo Bentancur", "Mediocampista", "Común", "1"},
-                    {"8", "8", "Nahitan Nandez", "Mediocampista", "Común", "1"},
-                    {"9", "9", "Maximiliano Araujo", "Delantero", "Común", "1"},
-                    {"10", "10", "Luis Suarez", "Delantero", "Común", "1"},
-                    {"11", "11", "Darwin Nunez", "Delantero", "Común", "1"},
-                    {"12", "12", "Vinicius Junior", "Delantero", "Estrella", "2"},
-                    {"13", "13", "Lionel Messi", "Delantero", "Estrella", "3"},
-                    {"14", "14", "Kylian Mbappe", "Delantero", "Estrella", "4"},
-                    {"15", "15", "Romelu Lukaku", "Delantero", "Estrella", "5"},
-                    {"16", "16", "Neymar Jr.", "Delantero", "Estrella", "2"},
-                    {"17", "17", "Luka Modric", "Mediocampista", "Estrella", "6"},
-                    {"18", "18", "Angel Di Maria", "Delantero", "Estrella", "3"},
-                    {"19", "19", "Harry Kane", "Delantero", "Estrella", "7"},
-                    {"20", "20", "Jude Bellingham", "Mediocampista", "Estrella", "7"},
-                    {"21", "21", "Alphonso Davies", "Defensa", "Estrella", "8"},
-                    {"22", "22", "Cristiano Ronaldo", "Delantero", "Estrella", "9"},
-                    {"23", "23", "Bruno Fernandes", "Mediocampista", "Estrella", "9"},
-                    {"24", "24", "Federico Valverde", "Mediocampista", "Estrella", "1"},
-                    {"25", "25", "Paul Pogba", "Mediocampista", "Estrella", "4"},
-                    {"26", "26", "Enzo Fernandez", "Mediocampista", "Estrella", "3"},
-                    {"27", "27", "Lamine Yamal", "Delantero", "Especial", "10"},
-                    {"28", "28", "Antony Robinson", "Defensa", "Especial", "7"},
-                    {"29", "29", "Darwin Nunez", "Delantero", "Especial", "1"},
-                    {"30", "30", "Virgil van Dijk", "Defensa", "Especial", "11"},
-                    {"31", "31", "Federico Valverde", "Mediocampista", "Especial", "1"},
-                    {"32", "32", "Lautaro Martinez", "Delantero", "Especial", "3"}
+                    {"1", "1", "Lionel Messi", "Delantero", "Estrella", "3", "1_lionel_messi.png"},
+                    {"2", "2", "Emiliano Martinez", "Portero", "Común", "3", "2_emiliano_martinez.png"},
+                    {"3", "3", "Julian Alvarez", "Delantero", "Común", "3", "3_julian_alvarez.png"},
+                    {"4", "4", "Lautaro Martinez", "Delantero", "Especial", "3", "4_lautaro_martinez.png"},
+                    {"5", "5", "Enzo Fernandez", "Mediocampista", "Estrella", "3", "5_enzo_fernandez.png"},
+                    {"6", "6", "Alexis Mac Allister", "Mediocampista", "Común", "3", "6_alexis_mac_allister.png"},
+                    {"7", "7", "Rodrigo De Paul", "Mediocampista", "Común", "3", "7_rodrigo_de_paul.png"},
+                    {"8", "8", "Nicolas Otamendi", "Defensa", "Común", "3", "8_nicolas_otamendi.png"},
+                    {"9", "9", "Cristian Romero", "Defensa", "Común", "3", "9_cristian_romero.png"},
+                    {"10", "10", "Nahuel Molina", "Defensa", "Común", "3", "10_nahuel_molina.png"},
+                    {"11", "11", "Escudo Argentina", "Escudo", "Especial", "3", "11_escudo_argentina.png"},
+                    {"12", "12", "Equipo Argentina", "Equipo", "Estrella", "3", "12_equipo_argentina.png"},
+                    {"13", "13", "Neymar Jr.", "Delantero", "Estrella", "2", "13_neymar_jr.png"},
+                    {"14", "14", "Vinicius Jr.", "Delantero", "Estrella", "2", "14_vinicius_jr.png"},
+                    {"15", "15", "Matheus Cunha", "Delantero", "Común", "2", "15_matheus_cunha.png"},
+                    {"16", "16", "Alisson Becker", "Portero", "Común", "2", "16_alisson_becker.png"},
+                    {"17", "17", "Gabriel Martinelli", "Delantero", "Común", "2", "17_gabriel_martinelli.png"},
+                    {"18", "18", "Casemiro", "Mediocampista", "Común", "2", "18_casemiro.png"},
+                    {"19", "19", "Raphinha", "Delantero", "Común", "2", "19_raphinha.png"},
+                    {"20", "20", "Marquinhos", "Defensa", "Común", "2", "20_marquinhos.png"},
+                    {"21", "21", "Gabriel Magalhaes", "Defensa", "Común", "2", "21_gabriel_magalhaes.png"},
+                    {"22", "22", "Bruno Guimaraes", "Mediocampista", "Común", "2", "22_bruno_guimaraes.png"},
+                    {"23", "23", "Escudo Brasil", "Escudo", "Especial", "2", "23_escudo_brasil.png"},
+                    {"24", "24", "Federico Valverde", "Mediocampista", "Estrella", "1", "24_federico_valverde.png"},
+                    {"25", "25", "Mathias Olivera", "Defensa", "Común", "1", "25_mathias_olivera.png"},
+                    {"26", "26", "Ronald Araujo", "Defensa", "Común", "1", "26_ronald_araujo.png"},
+                    {"27", "27", "Darwin Nunez", "Delantero", "Especial", "1", "27_darwin_nunez.png"},
+                    {"28", "28", "Jose Maria Gimenez", "Defensa", "Común", "1", "28_jose_maria_gimenez.png"},
+                    {"29", "29", "Rodrigo Bentancur", "Mediocampista", "Común", "1", "29_rodrigo_bentancur.png"},
+                    {"30", "30", "Manuel Ugarte", "Mediocampista", "Común", "1", "30_manuel_ugarte.png"},
+                    {"31", "31", "Sergio Rochet", "Portero", "Común", "1", "31_sergio_rochet.png"},
+                    {"32", "32", "Maximiliano Araujo", "Delantero", "Común", "1", "32_maxi_araujo.png"},
+                    {"33", "33", "Facundo Pellistri", "Delantero", "Común", "1", "33_facundo_pellistri.png"}
             };
 
-            try (PreparedStatement ps = con.prepareStatement(seedFigurita)) {
-                for (String[] f : catalogo) {
-                    ps.setInt(1, Integer.parseInt(f[0]));
-                    ps.setInt(2, Integer.parseInt(f[1]));
-                    ps.setString(3, f[2]);
-                    ps.setString(4, f[3]);
-                    ps.setString(5, f[4]);
-                    ps.setInt(6, Integer.parseInt(f[5]));
-                    ps.addBatch();
+            try (PreparedStatement sentencia = conexionBD.prepareStatement(semillaFigurita)) {
+                for (String[] fila : catalogo) {
+                    sentencia.setInt(1, Integer.parseInt(fila[0]));
+                    sentencia.setInt(2, Integer.parseInt(fila[1]));
+                    sentencia.setString(3, fila[2]);
+                    sentencia.setString(4, fila[3]);
+                    sentencia.setString(5, fila[4]);
+                    sentencia.setInt(6, Integer.parseInt(fila[5]));
+                    sentencia.setString(7, fila[6]);
+                    sentencia.addBatch();
                 }
-                ps.executeBatch();
+                sentencia.executeBatch();
             }
 
-            String seedCodigo = "INSERT IGNORE INTO codigo (codigo, recompensamonedas, recompensasobres) VALUES ('ITI2026', 500, 1), ('MUNDIAL', 1000, 2), ('FIGUS', 200, 0)";
-            con.createStatement().execute(seedCodigo);
+            String semillaCodigo = "INSERT IGNORE INTO codigo (codigo, recompensamonedas, recompensasobres) VALUES ('ITI2026', 500, 1), ('MUNDIAL', 1000, 2), ('FIGUS', 200, 0)";
+            conexionBD.createStatement().execute(semillaCodigo);
 
-        } catch (SQLException e) {
-            System.out.println("Error al crear la base de datos: " + e.getMessage());
+        } catch (SQLException excepcion) {
+            System.out.println("error al crear la base de datos: " + excepcion.getMessage());
         }
     }
 
-    private int nextId(Connection con, String tabla) throws SQLException {
-        try (PreparedStatement ps = con.prepareStatement("SELECT MAX(id) FROM " + tabla);
-             ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                int max = rs.getInt(1);
-                if (rs.wasNull()) {
+    private int siguienteId(Connection conexionBD, String tabla) throws SQLException {
+        try (PreparedStatement sentencia = conexionBD.prepareStatement("SELECT MAX(id) FROM " + tabla);
+             ResultSet resultado = sentencia.executeQuery()) {
+            if (resultado.next()) {
+                int maximo = resultado.getInt(1);
+                if (resultado.wasNull()) {
                     return 1;
                 }
-                return max + 1;
+                return maximo + 1;
             }
         }
         return 1;
     }
 
-    public boolean IniciarSesion(String nombre, String pwd) throws Exception {
-        try (Connection con = conexion.getConnection()) {
-            String sql = "SELECT id, monedas FROM usuario WHERE username = ?";
-            try (PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setString(1, nombre);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        id = rs.getInt("id");
-                        username = nombre;
-                        monedas = rs.getInt("monedas");
+    /**
+     * inicia sesion con un usuario, lo crea si no existe.
+     *
+     * @param nombre nombre de usuario
+     * @param contrasena contraseña (no se valida)
+     * @return true si la sesion se inicio
+     * @throws Exception si falla la base de datos
+     */
+    public boolean IniciarSesion(String nombre, String contrasena) throws Exception {
+        try (Connection conexionBD = conexion.getConnection()) {
+            String consulta = "SELECT id, monedas FROM usuario WHERE username = ?";
+            try (PreparedStatement sentencia = conexionBD.prepareStatement(consulta)) {
+                sentencia.setString(1, nombre);
+                try (ResultSet resultado = sentencia.executeQuery()) {
+                    if (resultado.next()) {
+                        identificador = resultado.getInt("id");
+                        nombreUsuario = nombre;
+                        monedas = resultado.getInt("monedas");
                         return true;
                     }
                 }
             }
 
-            int newId = nextId(con, "usuario");
-            String ins = "INSERT INTO usuario (id, username, monedas) VALUES (?, ?, ?)";
-            try (PreparedStatement ps = con.prepareStatement(ins)) {
-                ps.setInt(1, newId);
-                ps.setString(2, nombre);
-                ps.setInt(3, 1000);
-                ps.executeUpdate();
+            int nuevoId = siguienteId(conexionBD, "usuario");
+            String insercion = "INSERT INTO usuario (id, username, monedas) VALUES (?, ?, ?)";
+            try (PreparedStatement sentencia = conexionBD.prepareStatement(insercion)) {
+                sentencia.setInt(1, nuevoId);
+                sentencia.setString(2, nombre);
+                sentencia.setInt(3, 1000);
+                sentencia.executeUpdate();
             }
-            id = newId;
-            username = nombre;
+            identificador = nuevoId;
+            nombreUsuario = nombre;
             monedas = 1000;
 
-            try (PreparedStatement ps = con.prepareStatement("INSERT IGNORE INTO configuracion (id_usuario, visionnocturna, sonido) VALUES (?, ?, ?)")) {
-                ps.setInt(1, newId);
-                ps.setBoolean(2, false);
-                ps.setBoolean(3, true);
-                ps.executeUpdate();
+            try (PreparedStatement sentencia = conexionBD.prepareStatement("INSERT IGNORE INTO configuracion (id_usuario, visionnocturna, sonido) VALUES (?, ?, ?)")) {
+                sentencia.setInt(1, nuevoId);
+                sentencia.setBoolean(2, false);
+                sentencia.setBoolean(3, true);
+                sentencia.executeUpdate();
             }
 
             return true;
         }
     }
 
+    /**
+     * guarda el progreso del usuario.
+     *
+     * @param monedasNuevas monedas actualizadas
+     * @param figuritas lista de ids de figuritas nuevas
+     * @throws Exception si falla la base de datos
+     */
     public void GuardarProgreso(int monedasNuevas, ArrayList<Integer> figuritas) throws Exception {
         this.monedas = monedasNuevas;
 
-        try (Connection con = conexion.getConnection()) {
-            con.setAutoCommit(false);
+        try (Connection conexionBD = conexion.getConnection()) {
+            conexionBD.setAutoCommit(false);
             try {
-                try (PreparedStatement ps = con.prepareStatement("UPDATE usuario SET monedas = ? WHERE id = ?")) {
-                    ps.setInt(1, monedasNuevas);
-                    ps.setInt(2, id);
-                    ps.executeUpdate();
+                try (PreparedStatement sentencia = conexionBD.prepareStatement("UPDATE usuario SET monedas = ? WHERE id = ?")) {
+                    sentencia.setInt(1, monedasNuevas);
+                    sentencia.setInt(2, identificador);
+                    sentencia.executeUpdate();
                 }
 
                 if (figuritas != null && !figuritas.isEmpty()) {
-                    String sql = "INSERT INTO almacenamiento (id_usuario, id_figurita, cantidad) VALUES (?, ?, 1) "
+                    String consulta = "INSERT INTO almacenamiento (id_usuario, id_figurita, cantidad) VALUES (?, ?, 1) "
                             + "ON DUPLICATE KEY UPDATE cantidad = cantidad + 1";
-                    try (PreparedStatement ps = con.prepareStatement(sql)) {
-                        for (int fid : figuritas) {
-                            ps.setInt(1, id);
-                            ps.setInt(2, fid);
-                            ps.addBatch();
+                    try (PreparedStatement sentencia = conexionBD.prepareStatement(consulta)) {
+                        for (int idFigurita : figuritas) {
+                            sentencia.setInt(1, identificador);
+                            sentencia.setInt(2, idFigurita);
+                            sentencia.addBatch();
                         }
-                        ps.executeBatch();
+                        sentencia.executeBatch();
                     }
                 }
 
-                con.commit();
-            } catch (SQLException e) {
-                con.rollback();
-                throw e;
+                conexionBD.commit();
+            } catch (SQLException excepcion) {
+                conexionBD.rollback();
+                throw excepcion;
             }
-        } catch (SQLException e) {
-            System.err.println("Error al guardar progreso: " + e.getMessage());
+        } catch (SQLException excepcion) {
+            System.err.println("error al guardar progreso: " + excepcion.getMessage());
         }
     }
 
+    /**
+     * devuelve el nombre del usuario actual.
+     *
+     * @return nombre de usuario
+     * @throws Exception si falla
+     */
     public String getUsuarioActual() throws Exception {
-        return username;
+        return nombreUsuario;
     }
 
+    /**
+     * obtiene el catalogo de figuritas.
+     *
+     * @return lista de figuritas del catalogo
+     * @throws Exception si falla
+     */
     public ArrayList<Figurita> getFiguritasCatalogo() throws Exception {
-        String sql = "SELECT f.id, f.numero, f.jugador, f.posicion, f.rareza, s.id AS sel_id, s.nombre AS sel_nombre, s.grupo AS sel_grupo "
+        String consulta = "SELECT f.id, f.numero, f.jugador, f.posicion, f.rareza, f.imagen, s.id AS sel_id, s.nombre AS sel_nombre, s.grupo AS sel_grupo "
                 + "FROM figurita f JOIN seleccion s ON s.id = f.id_seleccion ORDER BY f.numero";
 
         ArrayList<Figurita> lista = new ArrayList<>();
 
-        try (Connection con = conexion.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+        try (Connection conexionBD = conexion.getConnection();
+             PreparedStatement sentencia = conexionBD.prepareStatement(consulta);
+             ResultSet resultado = sentencia.executeQuery()) {
 
-            while (rs.next()) {
-                Seleccion sel = new Seleccion(rs.getInt("sel_id"), rs.getString("sel_nombre"), rs.getString("sel_grupo").charAt(0));
-                Figurita fig = new Figurita(rs.getInt("id"), rs.getInt("numero"), rs.getString("jugador"), rs.getString("posicion"), rs.getString("rareza"), sel);
-                lista.add(fig);
+            while (resultado.next()) {
+                Seleccion seleccion = new Seleccion(resultado.getInt("sel_id"), resultado.getString("sel_nombre"), resultado.getString("sel_grupo").charAt(0));
+                Figurita figurita = new Figurita(resultado.getInt("id"), resultado.getInt("numero"), resultado.getString("jugador"), resultado.getString("posicion"), resultado.getString("rareza"), seleccion, resultado.getString("imagen"));
+                lista.add(figurita);
             }
 
-        } catch (SQLException e) {
-            System.err.println("Error al obtener el catalogo de figuritas: " + e.getMessage());
+        } catch (SQLException excepcion) {
+            System.err.println("error al obtener el catalogo de figuritas: " + excepcion.getMessage());
         }
 
         return lista;
     }
 
+    /**
+     * obtiene las figuritas del usuario.
+     *
+     * @return lista de ids de figuritas
+     * @throws Exception si falla
+     */
     public ArrayList<Integer> getFiguritasActuales() throws Exception {
-        String sql = "SELECT id_figurita, cantidad FROM almacenamiento WHERE id_usuario = ?";
+        String consulta = "SELECT id_figurita, cantidad FROM almacenamiento WHERE id_usuario = ?";
 
         ArrayList<Integer> lista = new ArrayList<>();
 
-        try (Connection con = conexion.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection conexionBD = conexion.getConnection();
+             PreparedStatement sentencia = conexionBD.prepareStatement(consulta)) {
 
-            ps.setInt(1, id);
+            sentencia.setInt(1, identificador);
 
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    int fid = rs.getInt("id_figurita");
-                    int cantidad = rs.getInt("cantidad");
-                    for (int i = 0; i < cantidad; i++) {
-                        lista.add(fid);
+            try (ResultSet resultado = sentencia.executeQuery()) {
+                while (resultado.next()) {
+                    int idFigurita = resultado.getInt("id_figurita");
+                    int cantidad = resultado.getInt("cantidad");
+                    for (int indice = 0; indice < cantidad; indice++) {
+                        lista.add(idFigurita);
                     }
                 }
             }
 
-        } catch (SQLException e) {
-            System.err.println("Error al obtener las figuritas del usuario: " + e.getMessage());
+        } catch (SQLException excepcion) {
+            System.err.println("error al obtener las figuritas del usuario: " + excepcion.getMessage());
         }
 
         return lista;
     }
 
+    /**
+     * obtiene las monedas actuales del usuario.
+     *
+     * @return cantidad de monedas
+     * @throws Exception si falla
+     */
     public int getMonedasActuales() throws Exception {
-        try (Connection con = conexion.getConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT monedas FROM usuario WHERE id = ?")) {
-            ps.setInt(1, id);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    monedas = rs.getInt("monedas");
+        try (Connection conexionBD = conexion.getConnection();
+             PreparedStatement sentencia = conexionBD.prepareStatement("SELECT monedas FROM usuario WHERE id = ?")) {
+            sentencia.setInt(1, identificador);
+            try (ResultSet resultado = sentencia.executeQuery()) {
+                if (resultado.next()) {
+                    monedas = resultado.getInt("monedas");
                     return monedas;
                 }
             }
-        } catch (SQLException e) {
-            System.err.println("Error al obtener monedas: " + e.getMessage());
+        } catch (SQLException excepcion) {
+            System.err.println("error al obtener monedas: " + excepcion.getMessage());
         }
         return monedas;
     }
 
+    /**
+     * actualiza las monedas del usuario.
+     *
+     * @param nuevas nuevas monedas
+     * @throws Exception si falla
+     */
     public void actualizarMonedas(int nuevas) throws Exception {
         monedas = nuevas;
-        try (Connection con = conexion.getConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE usuario SET monedas = ? WHERE id = ?")) {
-            ps.setInt(1, nuevas);
-            ps.setInt(2, id);
-            ps.executeUpdate();
+        try (Connection conexionBD = conexion.getConnection();
+             PreparedStatement sentencia = conexionBD.prepareStatement("UPDATE usuario SET monedas = ? WHERE id = ?")) {
+            sentencia.setInt(1, nuevas);
+            sentencia.setInt(2, identificador);
+            sentencia.executeUpdate();
         }
     }
 
+    /**
+     * carga la configuracion del usuario.
+     *
+     * @return arreglo con [vision nocturna, sonido]
+     * @throws Exception si falla
+     */
     public boolean[] cargarConfiguracion() throws Exception {
-        try (Connection con = conexion.getConnection()) {
-            try (PreparedStatement ps = con.prepareStatement("SELECT visionnocturna, sonido FROM configuracion WHERE id_usuario = ?")) {
-                ps.setInt(1, id);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        return new boolean[]{rs.getBoolean("visionnocturna"), rs.getBoolean("sonido")};
+        try (Connection conexionBD = conexion.getConnection()) {
+            try (PreparedStatement sentencia = conexionBD.prepareStatement("SELECT visionnocturna, sonido FROM configuracion WHERE id_usuario = ?")) {
+                sentencia.setInt(1, identificador);
+                try (ResultSet resultado = sentencia.executeQuery()) {
+                    if (resultado.next()) {
+                        return new boolean[]{resultado.getBoolean("visionnocturna"), resultado.getBoolean("sonido")};
                     }
                 }
             }
-            try (PreparedStatement ps = con.prepareStatement("INSERT IGNORE INTO configuracion (id_usuario, visionnocturna, sonido) VALUES (?, ?, ?)")) {
-                ps.setInt(1, id);
-                ps.setBoolean(2, false);
-                ps.setBoolean(3, true);
-                ps.executeUpdate();
+            try (PreparedStatement sentencia = conexionBD.prepareStatement("INSERT IGNORE INTO configuracion (id_usuario, visionnocturna, sonido) VALUES (?, ?, ?)")) {
+                sentencia.setInt(1, identificador);
+                sentencia.setBoolean(2, false);
+                sentencia.setBoolean(3, true);
+                sentencia.executeUpdate();
             }
             return new boolean[]{false, true};
         }
     }
 
+    /**
+     * guarda la configuracion del usuario.
+     *
+     * @param vision modo oscuro
+     * @param sonido sonido activo
+     * @throws Exception si falla
+     */
     public void guardarConfiguracion(boolean vision, boolean sonido) throws Exception {
-        try (Connection con = conexion.getConnection()) {
-            String sql = "INSERT INTO configuracion (id_usuario, visionnocturna, sonido) VALUES (?, ?, ?) "
+        try (Connection conexionBD = conexion.getConnection()) {
+            String consulta = "INSERT INTO configuracion (id_usuario, visionnocturna, sonido) VALUES (?, ?, ?) "
                     + "ON DUPLICATE KEY UPDATE visionnocturna = VALUES(visionnocturna), sonido = VALUES(sonido)";
-            try (PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setInt(1, id);
-                ps.setBoolean(2, vision);
-                ps.setBoolean(3, sonido);
-                ps.executeUpdate();
+            try (PreparedStatement sentencia = conexionBD.prepareStatement(consulta)) {
+                sentencia.setInt(1, identificador);
+                sentencia.setBoolean(2, vision);
+                sentencia.setBoolean(3, sonido);
+                sentencia.executeUpdate();
             }
         }
     }
 
+    /**
+     * canjea un codigo de recompensa.
+     *
+     * @param codigo codigo a canjear
+     * @return arreglo con [monedas, sobres] o null si no es valido
+     * @throws Exception si falla
+     */
     public int[] canjearCodigo(String codigo) throws Exception {
-        try (Connection con = conexion.getConnection()) {
-            con.setAutoCommit(false);
+        try (Connection conexionBD = conexion.getConnection()) {
+            conexionBD.setAutoCommit(false);
             try {
-                int monedasReward = 0;
-                int sobresReward = 0;
+                int monedasRecompensa = 0;
+                int sobresRecompensa = 0;
 
-                try (PreparedStatement ps = con.prepareStatement("SELECT recompensamonedas, recompensasobres FROM codigo WHERE codigo = ?")) {
-                    ps.setString(1, codigo);
-                    try (ResultSet rs = ps.executeQuery()) {
-                        if (!rs.next()) {
-                            con.rollback();
+                try (PreparedStatement sentencia = conexionBD.prepareStatement("SELECT recompensamonedas, recompensasobres FROM codigo WHERE codigo = ?")) {
+                    sentencia.setString(1, codigo);
+                    try (ResultSet resultado = sentencia.executeQuery()) {
+                        if (!resultado.next()) {
+                            conexionBD.rollback();
                             return null;
                         }
-                        monedasReward = rs.getInt("recompensamonedas");
-                        sobresReward = rs.getInt("recompensasobres");
+                        monedasRecompensa = resultado.getInt("recompensamonedas");
+                        sobresRecompensa = resultado.getInt("recompensasobres");
                     }
                 }
 
-                try (PreparedStatement ps = con.prepareStatement("SELECT 1 FROM canje WHERE id_usuario = ? AND codigo = ?")) {
-                    ps.setInt(1, id);
-                    ps.setString(2, codigo);
-                    try (ResultSet rs = ps.executeQuery()) {
-                        if (rs.next()) {
-                            con.rollback();
+                try (PreparedStatement sentencia = conexionBD.prepareStatement("SELECT 1 FROM canje WHERE id_usuario = ? AND codigo = ?")) {
+                    sentencia.setInt(1, identificador);
+                    sentencia.setString(2, codigo);
+                    try (ResultSet resultado = sentencia.executeQuery()) {
+                        if (resultado.next()) {
+                            conexionBD.rollback();
                             return null;
                         }
                     }
                 }
 
-                try (PreparedStatement ps = con.prepareStatement("INSERT INTO canje (id_usuario, codigo, fecha) VALUES (?, ?, NOW())")) {
-                    ps.setInt(1, id);
-                    ps.setString(2, codigo);
-                    ps.executeUpdate();
+                try (PreparedStatement sentencia = conexionBD.prepareStatement("INSERT INTO canje (id_usuario, codigo, fecha) VALUES (?, ?, NOW())")) {
+                    sentencia.setInt(1, identificador);
+                    sentencia.setString(2, codigo);
+                    sentencia.executeUpdate();
                 }
 
-                monedas += monedasReward;
-                try (PreparedStatement ps = con.prepareStatement("UPDATE usuario SET monedas = ? WHERE id = ?")) {
-                    ps.setInt(1, monedas);
-                    ps.setInt(2, id);
-                    ps.executeUpdate();
+                monedas += monedasRecompensa;
+                try (PreparedStatement sentencia = conexionBD.prepareStatement("UPDATE usuario SET monedas = ? WHERE id = ?")) {
+                    sentencia.setInt(1, monedas);
+                    sentencia.setInt(2, identificador);
+                    sentencia.executeUpdate();
                 }
 
-                con.commit();
-                return new int[]{monedasReward, sobresReward};
-            } catch (SQLException e) {
-                con.rollback();
-                throw e;
+                conexionBD.commit();
+                return new int[]{monedasRecompensa, sobresRecompensa};
+            } catch (SQLException excepcion) {
+                conexionBD.rollback();
+                throw excepcion;
             }
         }
     }
 
+    /**
+     * devuelve los sobres gratis del usuario.
+     *
+     * @return cantidad de sobres gratis
+     * @throws Exception si falla
+     */
     public int getSobresGratis() throws Exception {
-        try (Connection con = conexion.getConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT sobres_gratis FROM usuario WHERE id = ?")) {
-            ps.setInt(1, id);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("sobres_gratis");
+        try (Connection conexionBD = conexion.getConnection();
+             PreparedStatement sentencia = conexionBD.prepareStatement("SELECT sobres_gratis FROM usuario WHERE id = ?")) {
+            sentencia.setInt(1, identificador);
+            try (ResultSet resultado = sentencia.executeQuery()) {
+                if (resultado.next()) {
+                    return resultado.getInt("sobres_gratis");
                 }
             }
         }
         return 0;
     }
 
+    /**
+     * actualiza los sobres gratis del usuario.
+     *
+     * @param cantidad nueva cantidad
+     * @throws Exception si falla
+     */
     public void actualizarSobresGratis(int cantidad) throws Exception {
-        try (Connection con = conexion.getConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE usuario SET sobres_gratis = ? WHERE id = ?")) {
-            ps.setInt(1, cantidad);
-            ps.setInt(2, id);
-            ps.executeUpdate();
+        try (Connection conexionBD = conexion.getConnection();
+             PreparedStatement sentencia = conexionBD.prepareStatement("UPDATE usuario SET sobres_gratis = ? WHERE id = ?")) {
+            sentencia.setInt(1, cantidad);
+            sentencia.setInt(2, identificador);
+            sentencia.executeUpdate();
         }
     }
 
+    /**
+     * inicia la sesion por tiempo y otorga sobres pendientes.
+     *
+     * @throws Exception si falla
+     */
     public void iniciarSesionTiempo() throws Exception {
-        try (Connection con = conexion.getConnection()) {
-            con.setAutoCommit(false);
+        try (Connection conexionBD = conexion.getConnection()) {
+            conexionBD.setAutoCommit(false);
             try {
-                // Cerrar sesiones abiertas anteriores otorgando lo que corresponda
-                try (PreparedStatement ps = con.prepareStatement("SELECT id, ultima_recompensa FROM sesion WHERE id_usuario = ? AND fecha_salida IS NULL");
+                try (PreparedStatement sentencia = conexionBD.prepareStatement("SELECT id, ultima_recompensa FROM sesion WHERE id_usuario = ? AND fecha_salida IS NULL");
                      ) {
-                    ps.setInt(1, id);
-                    try (ResultSet rs = ps.executeQuery()) {
-                        while (rs.next()) {
-                            int sid = rs.getInt("id");
-                            Timestamp ultima = rs.getTimestamp("ultima_recompensa");
-                            otorgarSobresPorTiempo(con, sid, ultima);
-                            try (PreparedStatement ps2 = con.prepareStatement("UPDATE sesion SET fecha_salida = NOW() WHERE id = ?")) {
-                                ps2.setInt(1, sid);
-                                ps2.executeUpdate();
+                    sentencia.setInt(1, identificador);
+                    try (ResultSet resultado = sentencia.executeQuery()) {
+                        while (resultado.next()) {
+                            int idSesion = resultado.getInt("id");
+                            Timestamp ultima = resultado.getTimestamp("ultima_recompensa");
+                            otorgarSobresPorTiempo(conexionBD, idSesion, ultima);
+                            try (PreparedStatement sentencia2 = conexionBD.prepareStatement("UPDATE sesion SET fecha_salida = NOW() WHERE id = ?")) {
+                                sentencia2.setInt(1, idSesion);
+                                sentencia2.executeUpdate();
                             }
                         }
                     }
                 }
 
-                int newId = nextId(con, "sesion");
-                try (PreparedStatement ps = con.prepareStatement("INSERT INTO sesion (id, id_usuario, fecha_entrada, fecha_salida, ultima_recompensa) VALUES (?, ?, NOW(), NULL, NOW())")) {
-                    ps.setInt(1, newId);
-                    ps.setInt(2, id);
-                    ps.executeUpdate();
+                int nuevoId = siguienteId(conexionBD, "sesion");
+                try (PreparedStatement sentencia = conexionBD.prepareStatement("INSERT INTO sesion (id, id_usuario, fecha_entrada, fecha_salida, ultima_recompensa) VALUES (?, ?, NOW(), NULL, NOW())")) {
+                    sentencia.setInt(1, nuevoId);
+                    sentencia.setInt(2, identificador);
+                    sentencia.executeUpdate();
                 }
-                sesionActualId = newId;
-                con.commit();
-            } catch (SQLException e) {
-                con.rollback();
-                throw e;
+                idSesionActual = nuevoId;
+                conexionBD.commit();
+            } catch (SQLException excepcion) {
+                conexionBD.rollback();
+                throw excepcion;
             }
         }
     }
 
-    private void otorgarSobresPorTiempo(Connection con, int sid, Timestamp ultima) throws SQLException {
+    /**
+     * otorga sobres por tiempo transcurrido.
+     *
+     * @param conexionBD conexion activa
+     * @param idSesion id de sesion
+     * @param ultima ultima recompensa
+     * @throws SQLException si falla
+     */
+    private void otorgarSobresPorTiempo(Connection conexionBD, int idSesion, Timestamp ultima) throws SQLException {
         if (ultima == null) {
             return;
         }
-        long diffMs = System.currentTimeMillis() - ultima.getTime();
-        int bloques = (int) (diffMs / (15L * 60L * 1000L));
+        long diferenciaMs = System.currentTimeMillis() - ultima.getTime();
+        int bloques = (int) (diferenciaMs / (15L * 60L * 1000L));
         if (bloques <= 0) {
             return;
         }
         int nuevos = bloques * 3;
-        try (PreparedStatement ps = con.prepareStatement("UPDATE usuario SET sobres_gratis = sobres_gratis + ? WHERE id = ?")) {
-            ps.setInt(1, nuevos);
-            ps.setInt(2, id);
-            ps.executeUpdate();
+        try (PreparedStatement sentencia = conexionBD.prepareStatement("UPDATE usuario SET sobres_gratis = sobres_gratis + ? WHERE id = ?")) {
+            sentencia.setInt(1, nuevos);
+            sentencia.setInt(2, identificador);
+            sentencia.executeUpdate();
         }
         Timestamp nuevaUltima = new Timestamp(ultima.getTime() + bloques * 15L * 60L * 1000L);
-        try (PreparedStatement ps = con.prepareStatement("UPDATE sesion SET ultima_recompensa = ? WHERE id = ?")) {
-            ps.setTimestamp(1, nuevaUltima);
-            ps.setInt(2, sid);
-            ps.executeUpdate();
+        try (PreparedStatement sentencia = conexionBD.prepareStatement("UPDATE sesion SET ultima_recompensa = ? WHERE id = ?")) {
+            sentencia.setTimestamp(1, nuevaUltima);
+            sentencia.setInt(2, idSesion);
+            sentencia.executeUpdate();
         }
     }
 
+    /**
+     * reclama los sobres por tiempo actuales.
+     *
+     * @return cantidad de sobres reclamados
+     * @throws Exception si falla
+     */
     public int reclamarSobresActuales() throws Exception {
-        if (sesionActualId <= 0) {
+        if (idSesionActual <= 0) {
             return 0;
         }
-        try (Connection con = conexion.getConnection()) {
+        try (Connection conexionBD = conexion.getConnection()) {
             Timestamp ultima;
-            try (PreparedStatement ps = con.prepareStatement("SELECT ultima_recompensa FROM sesion WHERE id = ?")) {
-                ps.setInt(1, sesionActualId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (!rs.next()) {
+            try (PreparedStatement sentencia = conexionBD.prepareStatement("SELECT ultima_recompensa FROM sesion WHERE id = ?")) {
+                sentencia.setInt(1, idSesionActual);
+                try (ResultSet resultado = sentencia.executeQuery()) {
+                    if (!resultado.next()) {
                         return 0;
                     }
-                    ultima = rs.getTimestamp("ultima_recompensa");
+                    ultima = resultado.getTimestamp("ultima_recompensa");
                 }
             }
-            long diffMs = System.currentTimeMillis() - ultima.getTime();
-            int bloques = (int) (diffMs / (15L * 60L * 1000L));
+            long diferenciaMs = System.currentTimeMillis() - ultima.getTime();
+            int bloques = (int) (diferenciaMs / (15L * 60L * 1000L));
             if (bloques <= 0) {
                 return 0;
             }
             try {
-                con.setAutoCommit(false);
-                otorgarSobresPorTiempo(con, sesionActualId, ultima);
-                con.commit();
-            } catch (SQLException e) {
-                con.rollback();
-                throw e;
+                conexionBD.setAutoCommit(false);
+                otorgarSobresPorTiempo(conexionBD, idSesionActual, ultima);
+                conexionBD.commit();
+            } catch (SQLException excepcion) {
+                conexionBD.rollback();
+                throw excepcion;
             }
             return bloques * 3;
         }
     }
 
+    /**
+     * cierra la sesion por tiempo.
+     *
+     * @throws Exception si falla
+     */
     public void cerrarSesionTiempo() throws Exception {
-        if (sesionActualId <= 0) {
+        if (idSesionActual <= 0) {
             return;
         }
-        try (Connection con = conexion.getConnection()) {
-            try (PreparedStatement ps = con.prepareStatement("SELECT ultima_recompensa FROM sesion WHERE id = ?")) {
-                ps.setInt(1, sesionActualId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        Timestamp ultima = rs.getTimestamp("ultima_recompensa");
-                        otorgarSobresPorTiempo(con, sesionActualId, ultima);
+        try (Connection conexionBD = conexion.getConnection()) {
+            try (PreparedStatement sentencia = conexionBD.prepareStatement("SELECT ultima_recompensa FROM sesion WHERE id = ?")) {
+                sentencia.setInt(1, idSesionActual);
+                try (ResultSet resultado = sentencia.executeQuery()) {
+                    if (resultado.next()) {
+                        Timestamp ultima = resultado.getTimestamp("ultima_recompensa");
+                        otorgarSobresPorTiempo(conexionBD, idSesionActual, ultima);
                     }
                 }
             }
-            try (PreparedStatement ps = con.prepareStatement("UPDATE sesion SET fecha_salida = NOW() WHERE id = ?")) {
-                ps.setInt(1, sesionActualId);
-                ps.executeUpdate();
+            try (PreparedStatement sentencia = conexionBD.prepareStatement("UPDATE sesion SET fecha_salida = NOW() WHERE id = ?")) {
+                sentencia.setInt(1, idSesionActual);
+                sentencia.executeUpdate();
             }
         }
-        sesionActualId = -1;
+        idSesionActual = -1;
     }
 }
