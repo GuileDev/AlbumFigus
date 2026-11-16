@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 import Persistencia.Usuario;
 import logic.Album;
+import logic.Fachada;
 /**
  *
  * @author gerrz
@@ -99,19 +100,23 @@ private Usuario usuarioActual;
     String contra = contraseñatxt.getText();
 
     try {
-        usuarioActual = new Usuario();
+        Fachada fachada = new Fachada();
 
-        if (usuarioActual.IniciarSesion(user, contra)) {
+        if (fachada.login(user, contra)) {
 
-            int monedas = usuarioActual.getMonedasActuales();
+            int monedas = fachada.getMonedas();
 
-            System.out.println("Bienvenido: " + usuarioActual.getUsuarioActual());
+            System.out.println("Bienvenido: " + user);
             System.out.println("Monedas: " + monedas);
 
-            // Acá se abre el lobby, agarra los datos de la bd y los mete en el album
-            Album album = new Album(usuarioActual);
+            boolean[] cfg = fachada.cargarConfiguracion();
+            Preferencias.modoOscuro = cfg[0];
+            Preferencias.sonido = cfg[1];
 
-            new Lobby(usuarioActual, album).setVisible(true);
+            // Acá se abre el lobby, agarra los datos de la bd y los mete en el album
+            Album album = fachada.getAlbum();
+
+            new Lobby(fachada).setVisible(true);
             dispose();
 
         } else {

@@ -5,6 +5,7 @@
 package graphic;
 import javax.swing.JFrame;
 import java.awt.Color;
+import logic.Fachada;
 /**
  *
  * @author gerrz
@@ -12,6 +13,7 @@ import java.awt.Color;
 public class Configuracion extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Configuracion.class.getName());
+    private Fachada fachada;
 
     /**
      * Creates new form Configuracion
@@ -19,6 +21,19 @@ public class Configuracion extends javax.swing.JFrame {
     public Configuracion() {
         initComponents();
         // Inicializa el estado del interruptor según la preferencia guardada
+        checkboxoscuro.setSelected(Preferencias.modoOscuro);
+    }
+
+    public Configuracion(Fachada fachada) {
+        this.fachada = fachada;
+        initComponents();
+        try {
+            boolean[] cfg = fachada.cargarConfiguracion();
+            Preferencias.modoOscuro = cfg[0];
+            Preferencias.sonido = cfg[1];
+        } catch (Exception e) {
+            System.err.println("Error al cargar configuracion: " + e.getMessage());
+        }
         checkboxoscuro.setSelected(Preferencias.modoOscuro);
     }
 
@@ -100,8 +115,14 @@ public class Configuracion extends javax.swing.JFrame {
 
     private void checkboxoscuroActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkboxoscuroActionPerformed
         boolean seleccionado = checkboxoscuro.isSelected();
-                Preferencias.modoOscuro = seleccionado;
-        
+        Preferencias.modoOscuro = seleccionado;
+        if (fachada != null) {
+            try {
+                fachada.guardarConfiguracion(seleccionado, Preferencias.sonido);
+            } catch (Exception e) {
+                System.err.println("Error al guardar configuracion: " + e.getMessage());
+            }
+        }
     }//GEN-LAST:event_checkboxoscuroActionPerformed
 
     private void jRadioButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRadioButton2ActionPerformed

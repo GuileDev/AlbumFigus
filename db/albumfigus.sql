@@ -1,24 +1,16 @@
 -- ============================================================
---  AlbumFigus - Esquema de base de datos MySQL
---  Ejecutar como root:
---    mysql -u root -p --default-character-set=utf8mb4 < db/albumfigus.sql
+--  AlbumFigus - Esquema de base de datos MySQL (unica BD)
 -- ============================================================
 
-CREATE DATABASE IF NOT EXISTS album
-    CHARACTER SET utf8mb4
-    COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS album;
 
 USE album;
 
--- ------------------------------------------------------------
--- Tablas
--- ------------------------------------------------------------
-
 CREATE TABLE IF NOT EXISTS usuario (
-    id       INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    password VARCHAR(20) NOT NULL,
-    monedas  INT NOT NULL
+    id            INT PRIMARY KEY,
+    username      VARCHAR(50) NOT NULL UNIQUE,
+    monedas       INT NOT NULL,
+    sobres_gratis INT NOT NULL DEFAULT 0
 ) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS seleccion (
@@ -46,56 +38,60 @@ CREATE TABLE IF NOT EXISTS almacenamiento (
     FOREIGN KEY (id_figurita) REFERENCES figurita (id)
 ) ENGINE = InnoDB;
 
--- ------------------------------------------------------------
--- Selecciones iniciales
--- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS codigo (
+    codigo            VARCHAR(50) PRIMARY KEY,
+    recompensamonedas INT NOT NULL,
+    recompensasobres  INT NOT NULL
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS canje (
+    id_usuario INT NOT NULL,
+    codigo     VARCHAR(20) NOT NULL,
+    fecha      DATETIME NOT NULL,
+    PRIMARY KEY (id_usuario, codigo),
+    FOREIGN KEY (id_usuario) REFERENCES usuario (id),
+    FOREIGN KEY (codigo)     REFERENCES codigo (codigo)
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS configuracion (
+    id_usuario     INT PRIMARY KEY,
+    visionnocturna BOOLEAN NOT NULL,
+    sonido         BOOLEAN NOT NULL,
+    FOREIGN KEY (id_usuario) REFERENCES usuario (id)
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS revivir (
+    id          INT PRIMARY KEY,
+    id_usuario  INT NOT NULL,
+    consigna    VARCHAR(100) NOT NULL,
+    multiplicador INT NOT NULL,
+    completado  BOOLEAN NOT NULL,
+    FOREIGN KEY (id_usuario) REFERENCES usuario (id)
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS sesion (
+    id                 INT PRIMARY KEY,
+    id_usuario         INT NOT NULL,
+    fecha_entrada      DATETIME NOT NULL,
+    fecha_salida       DATETIME,
+    ultima_recompensa  DATETIME NOT NULL,
+    FOREIGN KEY (id_usuario) REFERENCES usuario (id)
+) ENGINE = InnoDB;
 
 INSERT IGNORE INTO seleccion (id, nombre, grupo) VALUES
     (1, 'Uruguay', 'A'),
     (2, 'Brasil',  'B'),
     (3, 'Argentina', 'C'),
     (4, 'Francia', 'D'),
-    (5, 'Bélgica', 'E'),
+    (5, 'Belgica', 'E'),
     (6, 'Croacia', 'F'),
     (7, 'Inglaterra', 'G'),
-    (8, 'Canadá', 'H'),
+    (8, 'Canada', 'H'),
     (9, 'Portugal', 'I'),
-    (10, 'España', 'J'),
-    (11, 'Países Bajos', 'K');
+    (10, 'Espana', 'J'),
+    (11, 'Paises Bajos', 'K');
 
--- ------------------------------------------------------------
--- Figuritas (32 = 11 Común / 15 Estrella / 6 Especial)
--- ------------------------------------------------------------
-
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (1, 1, 'Sergio Rochet', 'Portero', 'Común', 1);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (2, 2, 'Sebastián Cáceres', 'Defensa', 'Común', 1);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (3, 3, 'Ronald Araujo', 'Defensa', 'Común', 1);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (4, 4, 'José María Giménez', 'Defensa', 'Común', 1);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (5, 5, 'Manuel Ugarte', 'Mediocampista', 'Común', 1);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (6, 6, 'Federico Valverde', 'Mediocampista', 'Común', 1);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (7, 7, 'Rodrigo Bentancur', 'Mediocampista', 'Común', 1);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (8, 8, 'Nahitan Nández', 'Mediocampista', 'Común', 1);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (9, 9, 'Maximiliano Araújo', 'Delantero', 'Común', 1);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (10, 10, 'Luis Suárez', 'Delantero', 'Común', 1);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (11, 11, 'Darwin Núñez', 'Delantero', 'Común', 1);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (12, 12, 'Vinícius Júnior', 'Delantero', 'Estrella', 2);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (13, 13, 'Lionel Messi', 'Delantero', 'Estrella', 3);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (14, 14, 'Kylian Mbappé', 'Delantero', 'Estrella', 4);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (15, 15, 'Romelu Lukaku', 'Delantero', 'Estrella', 5);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (16, 16, 'Neymar Jr.', 'Delantero', 'Estrella', 2);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (17, 17, 'Luka Modrić', 'Mediocampista', 'Estrella', 6);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (18, 18, 'Ángel Di María', 'Delantero', 'Estrella', 3);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (19, 19, 'Harry Kane', 'Delantero', 'Estrella', 7);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (20, 20, 'Jude Bellingham', 'Mediocampista', 'Estrella', 7);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (21, 21, 'Alphonso Davies', 'Defensa', 'Estrella', 8);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (22, 22, 'Cristiano Ronaldo', 'Delantero', 'Estrella', 9);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (23, 23, 'Bruno Fernandes', 'Mediocampista', 'Estrella', 9);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (24, 24, 'Federico Valverde', 'Mediocampista', 'Estrella', 1);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (25, 25, 'Paul Pogba', 'Mediocampista', 'Estrella', 4);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (26, 26, 'Enzo Fernández', 'Mediocampista', 'Estrella', 3);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (27, 27, 'Lamine Yamal', 'Delantero', 'Especial', 10);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (28, 28, 'Antony Robinson', 'Defensa', 'Especial', 7);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (29, 29, 'Darwin Núñez', 'Delantero', 'Especial', 1);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (30, 30, 'Virgil van Dijk', 'Defensa', 'Especial', 11);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (31, 31, 'Federico Valverde', 'Mediocampista', 'Especial', 1);
-INSERT IGNORE INTO figurita (id, numero, jugador, posicion, rareza, id_seleccion) VALUES (32, 32, 'Lautaro Martínez', 'Delantero', 'Especial', 3);
+INSERT IGNORE INTO codigo (codigo, recompensamonedas, recompensasobres) VALUES
+    ('ITI2026', 500, 1),
+    ('MUNDIAL', 1000, 2),
+    ('FIGUS', 200, 0);

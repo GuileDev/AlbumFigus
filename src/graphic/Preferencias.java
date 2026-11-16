@@ -1,9 +1,6 @@
 package graphic;
 
-/**
- * Guarda las preferencias de configuración de la aplicación.
- */
 public class Preferencias {
     public static boolean modoOscuro = false;
-    public static boolean musica = true;
+    public static boolean sonido = true;
 }

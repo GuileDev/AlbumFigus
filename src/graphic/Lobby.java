@@ -6,6 +6,7 @@ package graphic;
 import java.awt.Color;
 import java.util.ArrayList;
 import logic.Album;
+import logic.Fachada;
 import logic.Figurita;
 import logic.Sobres;
 import Persistencia.Usuario;
@@ -17,20 +18,54 @@ public class Lobby extends javax.swing.JFrame {
 
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Lobby.class.getName());
 
+    private Fachada fachada;
     private Usuario usuarioActual;
     private Album album;
+    private javax.swing.JLabel Monedastext;
+    private javax.swing.JLabel sobresgratistext;
+    private javax.swing.JLabel sobrespreciotext;
 
        Color colornormal = new Color(51,51,255);
     /**
      * Creates new form Lobby
      */
-    public Lobby(Usuario usuario, Album album) {
-        this.usuarioActual = usuario;
-        this.album = album;
+    public Lobby(Fachada fachada) {
+        this.fachada = fachada;
+        this.usuarioActual = fachada.getUsuario();
+        this.album = fachada.getAlbum();
         initComponents();
 
         // Fuera de la region generada para que la regeneracion del .form no lo borre
         sobresbtn.addActionListener(this::sobresbtnActionPerformed);
+
+        Monedastext = new javax.swing.JLabel();
+        sobresgratistext = new javax.swing.JLabel();
+        sobrespreciotext = new javax.swing.JLabel();
+
+        Monedastext.setFont(new java.awt.Font("Fredoka SemiCondensed", 1, 18));
+        sobresgratistext.setFont(new java.awt.Font("Fredoka SemiCondensed", 1, 18));
+        sobrespreciotext.setFont(new java.awt.Font("Fredoka SemiCondensed", 1, 18));
+
+        getContentPane().add(Monedastext, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 20, 250, -1));
+        getContentPane().add(sobresgratistext, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 55, 250, -1));
+        getContentPane().add(sobrespreciotext, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 55, 250, -1));
+
+        actualizarMonedasLabel();
+        actualizarSobresLabel();
+
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosed(java.awt.event.WindowEvent e) {
+                fachada.cerrarSesionTiempo();
+            }
+        });
+
+        javax.swing.Timer timer = new javax.swing.Timer(60000, e -> {
+            fachada.reclamarSobres();
+            actualizarMonedasLabel();
+            actualizarSobresLabel();
+        });
+        timer.setRepeats(true);
+        timer.start();
     }
 
     /**
@@ -42,6 +77,7 @@ public class Lobby extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        monedastext = new javax.swing.JLabel();
         configbtn = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         sobresbtn = new javax.swing.JButton();
@@ -54,6 +90,11 @@ public class Lobby extends javax.swing.JFrame {
         setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         setResizable(false);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        monedastext.setFont(new java.awt.Font("Fredoka Condensed", 0, 36)); // NOI18N
+        monedastext.setForeground(new java.awt.Color(255, 255, 51));
+        monedastext.setText("Monedas: 0");
+        getContentPane().add(monedastext, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 476, 180, 60));
 
         configbtn.setBackground(new java.awt.Color(0, 0, 255));
         configbtn.setFont(new java.awt.Font("Fredoka SemiCondensed", 1, 18)); // NOI18N
@@ -154,7 +195,8 @@ public class Lobby extends javax.swing.JFrame {
     }//GEN-LAST:event_IndexbtnMouseExited
 
     private void SalirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SalirActionPerformed
-    dispose();
+        fachada.cerrarSesionTiempo();
+        dispose();
 
     }//GEN-LAST:event_SalirActionPerformed
 
@@ -172,9 +214,13 @@ Salir.setForeground(Color.YELLOW);
 
     private void sobresbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sobresbtnActionPerformed
         try {
-            Sobres sobres = new Sobres();
-
-            ArrayList<Figurita> nuevas = sobres.abrirSobre(album, usuarioActual);
+            ArrayList<Figurita> nuevas;
+            if (fachada.getSobresGratis() > 0) {
+                fachada.usarSobreGratis();
+                nuevas = fachada.abrirSobreGratis();
+            } else {
+                nuevas = fachada.abrirSobre();
+            }
 
             String mensaje = "Te salieron en el sobre:\n";
 
@@ -188,6 +234,9 @@ Salir.setForeground(Color.YELLOW);
                     "Abrir sobres",
                     javax.swing.JOptionPane.INFORMATION_MESSAGE
             );
+
+            actualizarMonedasLabel();
+            actualizarSobresLabel();
 
         } catch (Exception ex) {
             System.err.println("Error al abrir el sobre: " + ex.getMessage());
@@ -254,8 +303,29 @@ Salir.setForeground(Color.YELLOW);
     }//GEN-LAST:event_SalirMouseExited
 
     private void configbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_configbtnActionPerformed
-        new Configuracion().setVisible(true);
+        new Configuracion(fachada).setVisible(true);
     }//GEN-LAST:event_configbtnActionPerformed
+
+    private void actualizarMonedasLabel() {
+        try {
+            Monedastext.setText("Monedas: " + fachada.getMonedas());
+        } catch (Exception e) {
+            System.err.println("Error al actualizar monedas: " + e.getMessage());
+        }
+    }
+
+    private void actualizarSobresLabel() {
+        int gratis = fachada.getSobresGratis();
+        if (gratis > 0) {
+            sobresgratistext.setText("Sobres gratis: " + gratis);
+            sobresgratistext.setVisible(true);
+            sobrespreciotext.setVisible(false);
+        } else {
+            sobresgratistext.setVisible(false);
+            sobrespreciotext.setText("Precio: " + logic.Sobres.COSTO_SOBRE + " monedas");
+            sobrespreciotext.setVisible(true);
+        }
+    }
 
     /**
      * @param args the command line arguments
@@ -289,6 +359,7 @@ Salir.setForeground(Color.YELLOW);
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel monedastext;
     private javax.swing.JButton sobresbtn;
     // End of variables declaration//GEN-END:variables
 }
